@@ -1,0 +1,1684 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0a0a0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>nocte</title>
+<style>
+:root{
+  --bg:#0a0a0f;--card:#111118;--card2:#16161f;--border:#21212e;
+  --accent:#f472b6;--accent2:#ec4899;
+  --green:#34d399;--amber:#fbbf24;--blue:#60a5fa;--red:#f87171;--purple:#a78bfa;
+  --text:#e8e8f0;--muted:#5a5a78;--muted2:#2e2e42;
+  --gold:#f59e0b;--star-red:#ef4444;--star-blue:#3b82f6;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);color:var(--text);font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;min-height:100vh;padding-bottom:80px;}
+input,select,textarea,button{font-family:inherit;font-size:14px;}
+input,select,textarea{background:#1a1a26;border:1px solid var(--border);border-radius:8px;color:var(--text);outline:none;padding:9px 12px;width:100%;}
+select option{background:#1a1a26;}
+textarea{resize:vertical;}
+button{cursor:pointer;}
+
+/* ── Layout ── */
+#hdr{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border);padding:12px 14px 0;}
+.hdr-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.logo{font-size:18px;font-weight:900;letter-spacing:-.5px;}
+.logo span{color:var(--accent);}
+.sync-dot{display:flex;align-items:center;gap:5px;font-size:11px;}
+.sync-dot .dot{width:7px;height:7px;border-radius:50%;background:var(--muted);}
+.sync-dot.ok .dot{background:var(--green);}
+.sync-dot.saving .dot{background:var(--amber);animation:pulse 1s infinite;}
+.sync-dot.err .dot{background:var(--red);}
+.sync-dot.ok{color:var(--green);}
+.sync-dot.saving{color:var(--amber);}
+.sync-dot.err{color:var(--red);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+/* ── Tabs ── */
+.tabs{display:flex;overflow-x:auto;scrollbar-width:none;gap:0;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex:0 0 auto;padding:8px 10px 10px;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;min-width:46px;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700;}
+.tab .ico{font-size:16px;}
+
+/* ── Body ── */
+#body{padding:14px;max-width:540px;margin:0 auto;}
+
+/* ── Cards ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px;}
+.card-title{font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.card-title .ico{font-size:16px;}
+
+/* ── Form rows ── */
+.fr{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+.fr label{min-width:88px;font-size:11px;color:var(--muted);flex-shrink:0;}
+.fr .val{flex:1;font-size:13px;display:flex;align-items:center;flex-wrap:wrap;gap:4px;}
+.fr input,.fr select{padding:6px 10px;font-size:13px;}
+.fr .inp-sm{width:auto;}
+
+/* ── Buttons ── */
+.btn{border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;padding:13px;width:100%;background:linear-gradient(135deg,var(--accent2),var(--accent));margin-top:10px;}
+.btn-sm{border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:600;padding:6px 14px;background:linear-gradient(135deg,var(--accent2),var(--accent));cursor:pointer;}
+.btn-ghost{background:none;border:1px solid var(--border);border-radius:10px;color:var(--muted);font-size:13px;padding:10px 16px;cursor:pointer;}
+.btn-danger{background:none;border:1px solid rgba(248,113,113,.3);border-radius:8px;color:var(--red);font-size:12px;padding:5px 12px;cursor:pointer;}
+.btn-blue{background:none;border:1px solid rgba(96,165,250,.3);border-radius:8px;color:var(--blue);font-size:12px;padding:5px 12px;cursor:pointer;}
+.btn-green{background:linear-gradient(135deg,var(--green),#059669);}
+
+/* ── Chips ── */
+.chip{background:var(--card2);border:1px solid var(--border);border-radius:20px;color:var(--muted);font-size:12px;padding:5px 12px;cursor:pointer;}
+.chip.active{background:rgba(244,114,182,.12);border-color:var(--accent2);color:var(--accent);font-weight:700;}
+.chips{display:flex;gap:6px;flex-wrap:wrap;}
+
+/* ── Tags ── */
+.tag{border-radius:20px;font-size:10px;padding:2px 8px;}
+.tag-accent{background:rgba(244,114,182,.15);color:var(--accent);border:1px solid rgba(244,114,182,.3);}
+.tag-green{background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.3);}
+.tag-amber{background:rgba(251,191,36,.12);color:var(--amber);border:1px solid rgba(251,191,36,.3);}
+.tag-blue{background:rgba(96,165,250,.1);color:var(--blue);border:1px solid rgba(96,165,250,.3);}
+.tag-red{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.3);}
+.tag-muted{background:var(--card2);color:var(--muted);border:1px solid var(--border);}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--accent2);color:#fff;padding:10px 24px;border-radius:24px;font-size:13px;font-weight:700;z-index:999;white-space:nowrap;box-shadow:0 4px 20px rgba(236,72,153,.4);transition:opacity .3s;pointer-events:none;}
+#toast.hidden{opacity:0;}
+
+/* ── Session card ── */
+.sess-card{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;}
+.sess-time{font-weight:700;font-size:15px;display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.sess-info{font-size:12px;color:var(--muted);}
+.sess-money{text-align:right;}
+.sess-takehome{font-size:20px;font-weight:700;color:var(--green);}
+.sess-actions{display:flex;gap:8px;margin-top:10px;}
+
+/* ── Reservation card ── */
+.resv-card{border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid;}
+.resv-pending{background:rgba(96,165,250,.05);border-color:rgba(96,165,250,.2);}
+.resv-confirmed{background:rgba(52,211,153,.05);border-color:rgba(52,211,153,.2);}
+.resv-arrived{background:rgba(244,114,182,.05);border-color:rgba(244,114,182,.2);}
+.resv-cancelled{background:var(--card2);border-color:var(--border);opacity:.5;}
+
+/* ── KPI grid ── */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.kpi-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px;}
+.kpi label{font-size:10px;color:var(--muted);display:block;margin-bottom:4px;}
+.kpi .val{font-size:17px;font-weight:700;}
+.kpi-sm{background:var(--card2);border-radius:10px;padding:10px 12px;}
+.kpi-sm label{font-size:9px;color:var(--muted);display:block;margin-bottom:3px;}
+.kpi-sm .val{font-size:14px;font-weight:700;}
+
+/* ── Progress bar ── */
+.progress-wrap{height:8px;background:var(--card2);border-radius:4px;overflow:hidden;margin:6px 0;}
+.progress-bar{height:100%;border-radius:4px;transition:width .8s ease;}
+
+/* ── Calendar ── */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;}
+.cal-dow{text-align:center;font-size:10px;color:var(--muted);padding:4px 0;}
+.cal-day{border-radius:8px;padding:4px 3px;min-height:56px;cursor:pointer;position:relative;background:var(--card2);}
+.cal-day.empty{background:transparent;cursor:default;}
+.cal-day.today{border:1px solid var(--accent);}
+.cal-day .dn{font-size:11px;font-weight:600;margin-bottom:2px;}
+.cal-day .dm{font-size:9px;color:var(--green);}
+.cal-day .dc{font-size:9px;color:var(--muted);}
+.cal-day.c0{background:var(--card2);}
+.cal-day.c1{background:rgba(52,211,153,.08);}
+.cal-day.c2{background:rgba(52,211,153,.15);}
+.cal-day.c3{background:rgba(251,191,36,.12);}
+.cal-day.c4{background:rgba(244,114,182,.15);}
+.cal-day.resv-only{background:rgba(96,165,250,.07);}
+
+/* ── Heaven star ── */
+.star-bar{height:10px;background:var(--card2);border-radius:5px;overflow:hidden;}
+.star-fill{height:100%;border-radius:5px;transition:width .8s;}
+
+/* ── Heatmap ── */
+.heatmap{display:grid;grid-template-columns:repeat(24,1fr);gap:1px;}
+.hm-cell{height:20px;border-radius:2px;background:var(--card2);}
+.hm-cell.h1{background:rgba(244,114,182,.2);}
+.hm-cell.h2{background:rgba(244,114,182,.4);}
+.hm-cell.h3{background:rgba(244,114,182,.7);}
+.hm-cell.h4{background:var(--accent);}
+
+/* ── Breakdown ── */
+.breakdown{background:#0d0d14;border-radius:10px;padding:12px 14px;margin:10px 0;border:1px solid var(--border);}
+.brow{display:flex;justify-content:space-between;padding:3px 0;}
+.brow .bl{font-size:11px;color:var(--muted);}
+.brow .br{font-size:12px;}
+.brow.bold .br{font-weight:700;}
+.brow.big .br{font-size:17px;font-weight:700;}
+.divider{height:1px;background:var(--border);margin:6px 0;}
+
+/* ── Report text ── */
+.report-box{background:#131320;border:1px solid var(--border);border-radius:10px;padding:14px;font-size:12px;line-height:1.8;white-space:pre-wrap;font-family:monospace;color:var(--text);margin-bottom:10px;}
+
+/* ── Empty ── */
+.empty{text-align:center;color:var(--muted);padding:50px 20px;font-size:14px;line-height:2.4;}
+
+/* ── Modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:flex-end;}
+.modal{background:var(--card);border-radius:20px 20px 0 0;padding:24px;width:100%;max-height:90vh;overflow-y:auto;}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:16px;}
+
+/* ── Section label ── */
+.sec-label{font-size:10px;font-weight:700;color:var(--accent);margin:14px 0 5px;letter-spacing:.1em;text-transform:uppercase;}
+
+/* ── Status badges ── */
+.status-badge{border-radius:20px;font-size:10px;padding:2px 8px;font-weight:600;}
+.s-pending{background:rgba(96,165,250,.15);color:var(--blue);}
+.s-room_wait{background:rgba(251,191,36,.15);color:var(--amber);}
+.s-confirmed{background:rgba(52,211,153,.15);color:var(--green);}
+.s-arrived{background:rgba(244,114,182,.15);color:var(--accent);}
+.s-cancelled{background:var(--card2);color:var(--muted);}
+
+/* ── Queue badge ── */
+#queue-badge{position:fixed;bottom:90px;right:16px;background:var(--red);color:#fff;border-radius:20px;font-size:11px;font-weight:700;padding:6px 12px;cursor:pointer;z-index:99;display:none;}
+
+/* ── Loading ── */
+#loading{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:999;}
+#loading .logo{font-size:32px;}
+#loading p{color:var(--muted);font-size:13px;}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="logo">🌙 <span style="color:var(--accent)">nocte</span></div>
+  <p>データを読み込み中…</p>
+</div>
+
+<div id="app" style="display:none;">
+
+<div id="hdr">
+  <div class="hdr-top">
+    <div class="logo">🌙 <span>nocte</span></div>
+    <div class="sync-dot" id="sync-dot">
+      <div class="dot"></div>
+      <span id="sync-label">--</span>
+    </div>
+  </div>
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-tab="dash"><span class="ico">🏠</span>ホーム</button>
+    <button class="tab" data-tab="resv"><span class="ico">📋</span>予約</button>
+    <button class="tab" data-tab="sess"><span class="ico">✅</span>実績</button>
+    <button class="tab" data-tab="cal"><span class="ico">📅</span>カレンダー</button>
+    <button class="tab" data-tab="cust"><span class="ico">👤</span>顧客</button>
+    <button class="tab" data-tab="ana"><span class="ico">📊</span>分析</button>
+    <button class="tab" data-tab="cfg"><span class="ico">⚙️</span>設定</button>
+  </div>
+</div>
+
+<div id="body">
+  <div id="tab-dash" class="tab-content"></div>
+  <div id="tab-resv" class="tab-content" style="display:none"></div>
+  <div id="tab-sess" class="tab-content" style="display:none"></div>
+  <div id="tab-cal" class="tab-content" style="display:none"></div>
+  <div id="tab-cust" class="tab-content" style="display:none"></div>
+  <div id="tab-ana" class="tab-content" style="display:none"></div>
+  <div id="tab-cfg" class="tab-content" style="display:none"></div>
+</div>
+
+</div><!-- #app -->
+
+<div id="toast" class="hidden"></div>
+<div id="queue-badge" onclick="showQueue()">📤 未送信 <span id="queue-count">0</span></div>
+
+<div id="modal-container"></div>
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════════════════
+// CONFIG & STATE
+// ═══════════════════════════════════════════════════════════
+const CFG = {
+  webhookUrl: localStorage.getItem('nocte_webhook') || '',
+  lsPrefix: 'nocte_',
+};
+
+const INITIAL_SETTINGS = {
+  monthGoal: 300000,
+  honShimeiBack: 1000,
+  freeOptionThreshold: 1,
+  extraOptionBack: 500,
+  zatsubiRate: 0.1,
+  paidOptions: { 顔射:1000, 写メ:1000, ムービー:2000, ごっくん:2000, AF:5000 },
+  webhookUrl: 'https://script.google.com/macros/s/AKfycbxpidtiGI-ABQDRr_tCqwEw1low73Q1cZs7AatyYeNP6VAMT_CHf3j5G5rNSWgy1I4P9Q/exec',
+};
+
+const INITIAL_SHIFTS = {
+  'default': { shiftStart:'11:00', shiftEnd:'23:00' },
+  '2026-04-23': { shiftStart:'12:00', shiftEnd:'23:00' },
+  '2026-05-07': { shiftStart:'12:00', shiftEnd:'23:00' },
+  '2026-05-15': { shiftStart:'10:00', shiftEnd:'22:00' },
+};
+
+const DISCOUNT_NO_BACK = ['はじめて割','新人割'];
+const STATUS_LABELS = { pending:'未確認', room_wait:'部屋待ち', confirmed:'確認済', arrived:'到着', cancelled:'キャンセル' };
+const STATUS_CLASS  = { pending:'s-pending', room_wait:'s-room_wait', confirmed:'s-confirmed', arrived:'s-arrived', cancelled:'s-cancelled' };
+const CUST_TAGS = ['優しい','会話多め','静か','OP好き','ロング','本指候補','注意'];
+
+let DB = {
+  sessions: [],
+  reservations: [],
+  customers: [],
+  settings: { ...INITIAL_SETTINGS },
+  daily_shifts: { ...INITIAL_SHIFTS },
+};
+let syncQueue = JSON.parse(localStorage.getItem('nocte_queue') || '[]');
+let currentTab = 'dash';
+let calMonth = new Date().toISOString().slice(0,7);
+
+// ═══════════════════════════════════════════════════════════
+// INITIAL DATA (既存データ移行済み)
+// ═══════════════════════════════════════════════════════════
+const INIT_SESSIONS = [{"id":"1778763086442","date":"2026-04-23","startTime":"14:40","endTime":"16:20","customerId":"1778763083811","customerName":"イケダ","hotel":"10セゾン","room":"603","courseMinutes":100,"sales":15500,"shimeiType":"写真指名","discountType":"","bonusMinutes":0,"includeBonusInBack":false,"freeOptionCount":1,"extraOptionCount":0,"paidOptions":[],"memo":"","isHeaven":false,"predictedBack":9000,"predictedTakeHome":8100,"predictedShopShare":900,"actualShopShare":null,"actualTakeHome":null,"variance":null,"calcStatus":"predicted"},{"id":"1778763254404","date":"2026-04-23","startTime":"16:25","endTime":"17:45","customerId":"1778763249163","customerName":"サイトウ","hotel":"10セゾン","room":"601","courseMinutes":80,"sales":12500,"shimeiType":"写真指名","discountType":"","bonusMinutes":0,"includeBonusInBack":false,"freeOptionCount":0,"extraOptionCount":0,"paidOptions":[],"memo":"","isHeaven":false,"predictedBack":7000,"predictedTakeHome":6300,"predictedShopShare":700,"actualShopShare":null,"actualTakeHome":null,"variance":null,"calcStatus":"predicted"},{"id":"1778767814806","date":"2026-04-23","startTime":"19:30","endTime":"20:30","customerId":"1778767810246","customerName":"コバヤシ","hotel":"スイートシーズン","room":"305","courseMinutes":60,"sales":9500,"shimeiType":"写真指名","discountType":"","bonusMinutes":0,"includeBonusInBack":false,"freeOptionCount":0,"extraOptionCount":0,"paidOptions":[],"memo":"","isHeaven":false,"predictedBack":5000,"predictedTakeHome":4500,"predictedShopShare":500,"actualShopShare":null,"actualTakeHome":null,"variance":null,"calcStatus":"predicted"},{"id":"1778767890228","date":"2026-04-23","startTime":"20:45","endTime":"21:45","customerId":"1778767886918","customerName":"シミズ","hotel":"10セゾン","room":"1003","courseMinutes":60,"sales":9500,"shimeiType":"写真指名","discountType":"","bonusMinutes":0,"includeBonusInBack":false,"freeOptionCount":1,"extraOptionCount":0,"paidOptions":[],"memo":"ヘブン予約","isHeaven":true,"predictedBack":5000,"predictedTakeHome":4500,"predictedShopShare":500,"actualShopShare":null,"actualTakeHome":null,"variance":null,"calcStatus":"predicted"},{"id":"1778768142987","date":"2026-04-27","startTime":"11:30","endTime":"12:30","customerId":"1778768140990","customerName":"サトウ","hotel":"サンパール","room":"","courseMinutes":60,"sales":9500,"shimeiType":"写真指名","discountType":"","bonusMinutes":0,"includeBonusInBack":false,"freeOptionCount":1,"extraOptionCount":0,"paidOptions":[],"memo":"","isHeaven":false,"predictedBack":5000,"predictedTakeHome":4500,"predictedShopShare":500,"actualShopShare":null,"actualTakeHome":null,"variance":null,"calcStatus":"predicted"},{"id":"1778768273436","date":"2026-04-27","startTime":"12:40","endTime":"14:30","customerId":"1778768270127","customerName":"スズキ","hotel":"ルナ(元シャイン)","room":"506","courseMinutes":100,"sales":16000,"shimeiType":"写真指名","discountType":"即姫割","bonusMinutes":10,"includeBonusInBack":false,"freeOptionCount":2,"extraOptionCount":0,"paidOptions":[],"memo":"コスプレ セーラー","isHeaven":false,"predictedBack":9500,"predictedTakeHome":8550,"predictedShopShare":950,"actualShopShare":null,"actualTakeHome":null,"variance":null,"calcStatus":"predicted"},{"id":"1778768391039","date":"2026-04-27","startTime":"14:45","endTime":"16:45","customerId":"1778768373651","customerName":"マツシタ","hotel":"ルナ(元シャイン)","room":"503","courseMinutes":120,"sales":19500,"shimeiType":"写真指名","discountType":"","bonusMinutes":0,"includeBonusInBack":false,"freeOptionCount":0,"extraOptionCount":0,"paidOptions":[],"memo":"","isHeaven":false,"predictedBack":11000,"predictedTakeHome":9900,"predictedShopShare":1100,"actualShopShare":null,"actualTakeHome":null,"variance":null,"calcStatus":"predicted"},{"id":"1778768481496","date":"2026-04-27","startTime":"18:30","endTime":"22:40","customerId":"1778768477368","customerName":"ホソヤマ","hotel":"自宅","room":"所沢ококо503","courseMinutes":240,"sales":45500,"shimeiType":"写真指名","discountType":"前日予約割","bonusMinutes":10,"includeBonusInBack":true,"freeOptionCount":0,"extraOptionCount":0,"paidOptions":[],"memo":"ヘブン予約","isHeaven":true,"predictedBack":21600,"predictedTakeHome":19440,"predictedShopShare":2160,"actualShopShare":null,"actualTakeHome":null,"variance":null,"calcStatus":"predicted"},{"id":"1778768665604","date":"2026-05-01","startTime":"11:10","endTime":"14:30","customerId":"1778768661012","customerName":"キハラ","hotel":"バニラリゾート","room":"505","courseMinutes":180,"sales":30000,"shimeiType":"写真指名","discountType":"出勤一番","bonusMinutes":20,"includeBonusInBack":true,"freeOptionCount":2,"extraOptionCount":1,"paidOptions":[],"memo":"","isHeaven":false,"predictedBack":18000,"predictedTakeHome":16200,"predictedShopShare":1800,"actualShopShare":null,"actualTakeHome":null,"variance":null,"calcStatus":"predicted"},{"id":"1778768789070","date":"2026-05-01","startTime":"14:55","endTime":"15:55","customerId":"1778768785030","customerName":"イトウ","hotel":"サンパール","room":"505","courseMinutes":60,"sales":9500,"shimeiType":"写真指名","discountType":"","bonusMinutes":0,"includeBonusInBack":false,"freeOptionCount":0,"extraOptionCount":0,"paidOptions":[],"memo":"","isHeaven":false,"predictedBack":5000,"predictedTakeHome":4500,"predictedShopShare":500,"actualShopShare":null,"actualTakeHome":null,"variance":null,"calcStatus":"predicted"},{"id":"1778768888497","date":"2026-05-01","startTime":"18:00","endTime":"19:30","customerId":"1778768884388","customerName":"アクタガワ","hotel":"自宅","room":"","courseMinutes":80,"sales":15500,"shimeiType":"写真指名","discountType":"前日予約割","bonusMinutes":10,"includeBonusInBack":true,"freeOptionCount":1,"extraOptionCount":0,"paidOptions":[],"memo":"","isHeaven":true,"predictedBack":7200,"predictedTakeHome":6480,"predictedShopShare":720,"actualShopShare":null,"actualTakeHome":null,"variance":null,"calcStatus":"predicted"},{"id":"1778768967448","date":"2026-05-01","startTime":"20:00","endTime":"22:40","customerId":"1778768964057","customerName":"キムラ","hotel":"サンパール","room":"402","courseMinutes":150,"sales":26000,"shimeiType":"写真指名","discountType":"新人割","bonusMinutes":10,"includeBonusInBack":false,"freeOptionCount":1,"extraOptionCount":0,"paidOptions":["ごっくん"],"memo":"ヘブン予約 コスプレ制服3","isHeaven":true,"predictedBack":14400,"predictedTakeHome":12960,"predictedShopShare":1440,"actualShopShare":null,"actualTakeHome":null,"variance":null,"calcStatus":"predicted"},{"id":"1778769079703","date":"2026-05-03","startTime":"11:10","endTime":"13:30","customerId":"1778769076095","customerName":"タケウチ","hotel":"スイートシーズン","room":"403","courseMinutes":120,"sales":19500,"shimeiType":"写真指名","discountType":"出勤一番","bonusMinutes":20,"includeBonusInBack":true,"freeOptionCount":0,"extraOptionCount":0,"paidOptions":[],"memo":"ヘブン予約","isHeaven":true,"predictedBack":11700,"predictedTakeHome":10530,"predictedShopShare":1170,"actualShopShare":null,"actualTakeHome":null,"variance":null,"calcStatus":"predicted"},{"id":"1778769138408","date":"2026-05-03","startTime":"14:45","endTime":"16:25","customerId":"1778769132952","customerName":"ヒラタ","hotel":"サンパール","room":"302","courseMinutes":100,"sales":16000,"shimeiType":"写真指名","discountType":"","bonusMinutes":0,"includeBonusInBack":false,"freeOptionCount":2,"extraOptionCount":0,"paidOptions":[],"memo":"コスプレOL","isHeaven":false,"predictedBack":8550,"predictedTakeHome":7695,"predictedShopShare":855,"actualShopShare":null,"actualTakeHome":null,"variance":null,"calcStatus":"predicted"},{"id":"1778769200898","date":"2026-05-03","startTime":"18:45","endTime":"20:45","customerId":"1778769199419","customerName":"オカモト","hotel":"SARA","room":"207","courseMinutes":120,"sales":19500,"shimeiType":"写真指名","discountType":"","bonusMinutes":0,"includeBonusInBack":false,"freeOptionCount":0,"extraOptionCount":0,"paidOptions":[],"memo":"","isHeaven":false,"predictedBack":9900,"predictedTakeHome":8910,"predictedShopShare":990,"actualShopShare":null,"actualTakeHome":null,"variance":null,"calcStatus":"predicted"},{"id":"1778769341212","date":"2026-05-07","startTime":"12:10","endTime":"14:10","customerId":"1778769335325","customerName":"ハリガヤ","hotel":"スイートシーズン","room":"411","courseMinutes":120,"sales":19500,"shimeiType":"写真指名","discountType":"","bonusMinutes":0,"includeBonusInBack":false,"freeOptionCount":1,"extraOptionCount":0,"paidOptions":[],"memo":"","isHeaven":true,"predictedBack":9900,"predictedTakeHome":8910,"predictedShopShare":990,"actualShopShare":null,"actualTakeHome":null,"variance":null,"calcStatus":"predicted"},{"id":"1778769438664","date":"2026-05-07","startTime":"14:10","endTime":"15:10","customerId":"1778769435421","customerName":"ヨシダ","hotel":"サンパール","room":"401","courseMinutes":60,"sales":9500,"shimeiType":"写真指名","discountType":"","bonusMinutes":0,"includeBonusInBack":false,"freeOptionCount":0,"extraOptionCount":0,"paidOptions":[],"memo":"","isHeaven":false,"predictedBack":5000,"predictedTakeHome":4500,"predictedShopShare":500,"actualShopShare":null,"actualTakeHome":null,"variance":null,"calcStatus":"predicted"},{"id":"1778769496531","date":"2026-05-07","startTime":"15:40","endTime":"16:50","customerId":"1778769495053","customerName":"ワキモト","hotel":"自宅","room":"","courseMinutes":60,"sales":12000,"shimeiType":"写真指名","discountType":"はじめて割","bonusMinutes":10,"includeBonusInBack":false,"freeOptionCount":1,"extraOptionCount":0,"paidOptions":[],"memo":"","isHeaven":false,"predictedBack":5000,"predictedTakeHome":4500,"predictedShopShare":500,"actualShopShare":null,"actualTakeHome":null,"variance":null,"calcStatus":"predicted"},{"id":"1778769551731","date":"2026-05-07","startTime":"18:15","endTime":"19:55","customerId":"1778769549899","customerName":"イトウ","hotel":"スイートシーズン","room":"208","courseMinutes":100,"sales":15500,"shimeiType":"写真指名","discountType":"","bonusMinutes":0,"includeBonusInBack":false,"freeOptionCount":0,"extraOptionCount":0,"paidOptions":[],"memo":"","isHeaven":false,"predictedBack":9000,"predictedTakeHome":8100,"predictedShopShare":900,"actualShopShare":null,"actualTakeHome":null,"variance":null,"calcStatus":"predicted"},{"id":"1778769640309","date":"2026-05-07","startTime":"20:05","endTime":"22:05","customerId":"1778769637573","customerName":"マエダ","hotel":"SARA","room":"205","courseMinutes":120,"sales":19500,"shimeiType":"写真指名","discountType":"","bonusMinutes":0,"includeBonusInBack":false,"freeOptionCount":1,"extraOptionCount":0,"paidOptions":[],"memo":"ヘブン予約","isHeaven":true,"predictedBack":9900,"predictedTakeHome":8910,"predictedShopShare":990,"actualShopShare":null,"actualTakeHome":null,"variance":null,"calcStatus":"predicted"},{"id":"1778804223960","date":"2026-05-13","startTime":"14:00","endTime":"15:30","customerId":"1778804220464","customerName":"イシカワ","hotel":"VOGUE","room":"202","courseMinutes":80,"sales":13500,"shimeiType":"写真指名","discountType":"前日予約割","bonusMinutes":10,"includeBonusInBack":true,"freeOptionCount":3,"extraOptionCount":0,"paidOptions":[],"memo":"ヘブン予約","isHeaven":true,"predictedBack":8100,"predictedTakeHome":7290,"predictedShopShare":810,"actualShopShare":null,"actualTakeHome":null,"variance":null,"calcStatus":"predicted"},{"id":"1778804282820","date":"2026-05-13","startTime":"11:55","endTime":"13:25","customerId":"1778804276166","customerName":"カンダ","hotel":"ミント","room":"202","courseMinutes":80,"sales":12000,"shimeiType":"写真指名","discountType":"はじめて割","bonusMinutes":10,"includeBonusInBack":false,"freeOptionCount":0,"extraOptionCount":0,"paidOptions":[],"memo":"","isHeaven":false,"predictedBack":6300,"predictedTakeHome":5670,"predictedShopShare":630,"actualShopShare":null,"actualTakeHome":null,"variance":null,"calcStatus":"predicted"},{"id":"1778804335875","date":"2026-05-13","startTime":"16:55","endTime":"18:45","customerId":"1778804333798","customerName":"シミズ","hotel":"スイートシーズン","room":"301","courseMinutes":100,"sales":15000,"shimeiType":"写真指名","discountType":"はじめて割","bonusMinutes":10,"includeBonusInBack":false,"freeOptionCount":0,"extraOptionCount":0,"paidOptions":[],"memo":"","isHeaven":false,"predictedBack":8100,"predictedTakeHome":7290,"predictedShopShare":810,"actualShopShare":null,"actualTakeHome":null,"variance":null,"calcStatus":"predicted"},{"id":"1778812416722","date":"2026-05-15","startTime":"10:10","endTime":"11:20","customerId":"1778812409934","customerName":"キヤマ","hotel":"サンパール","room":"302","courseMinutes":60,"sales":9000,"shimeiType":"写真指名","discountType":"新人割","bonusMinutes":10,"includeBonusInBack":false,"freeOptionCount":0,"extraOptionCount":0,"paidOptions":[],"memo":"ヘブン予約","isHeaven":true,"predictedBack":4500,"predictedTakeHome":4050,"predictedShopShare":450,"actualShopShare":null,"actualTakeHome":null,"variance":null,"calcStatus":"predicted"}];
+
+const INIT_CUSTOMERS = [{"id":"1778763083811","customerNo":"C001","name":"イケダ","aliases":[],"media":[],"heavenName":"","memo":"","notes":"","preferences":[],"favoriteHotels":[],"favoriteOptions":[],"totalVisits":1,"totalSales":15500,"totalTakeHome":8100,"averageUnitPrice":15500,"lastVisit":"2026-04-23"},{"id":"1778763249163","customerNo":"C002","name":"サイトウ","aliases":[],"media":[],"heavenName":"","memo":"","notes":"","preferences":[],"favoriteHotels":[],"favoriteOptions":[],"totalVisits":1,"totalSales":12500,"totalTakeHome":6300,"averageUnitPrice":12500,"lastVisit":"2026-04-23"},{"id":"1778767810246","customerNo":"C003","name":"コバヤシ","aliases":[],"media":[],"heavenName":"","memo":"","notes":"","preferences":[],"favoriteHotels":[],"favoriteOptions":[],"totalVisits":1,"totalSales":9500,"totalTakeHome":4500,"averageUnitPrice":9500,"lastVisit":"2026-04-23"},{"id":"1778767886918","customerNo":"C004","name":"シミズ","aliases":[],"media":[],"heavenName":"","memo":"","notes":"","preferences":[],"favoriteHotels":[],"favoriteOptions":[],"totalVisits":1,"totalSales":9500,"totalTakeHome":4500,"averageUnitPrice":9500,"lastVisit":"2026-04-23"},{"id":"1778768140990","customerNo":"C005","name":"サトウ","aliases":[],"media":[],"heavenName":"","memo":"","notes":"","preferences":[],"favoriteHotels":[],"favoriteOptions":[],"totalVisits":1,"totalSales":9500,"totalTakeHome":4500,"averageUnitPrice":9500,"lastVisit":"2026-04-27"},{"id":"1778768270127","customerNo":"C006","name":"スズキ","aliases":[],"media":[],"heavenName":"","memo":"","notes":"","preferences":[],"favoriteHotels":[],"favoriteOptions":[],"totalVisits":1,"totalSales":16000,"totalTakeHome":8550,"averageUnitPrice":16000,"lastVisit":"2026-04-27"},{"id":"1778768373651","customerNo":"C007","name":"マツシタ","aliases":[],"media":[],"heavenName":"","memo":"","notes":"","preferences":[],"favoriteHotels":[],"favoriteOptions":[],"totalVisits":1,"totalSales":19500,"totalTakeHome":9900,"averageUnitPrice":19500,"lastVisit":"2026-04-27"},{"id":"1778768477368","customerNo":"C008","name":"ホソヤマ","aliases":[],"media":[],"heavenName":"","memo":"ヘブン","notes":"","preferences":[],"favoriteHotels":[],"favoriteOptions":[],"totalVisits":1,"totalSales":45500,"totalTakeHome":19440,"averageUnitPrice":45500,"lastVisit":"2026-04-27"},{"id":"1778768661012","customerNo":"C009","name":"キハラ","aliases":[],"media":[],"heavenName":"","memo":"","notes":"","preferences":[],"favoriteHotels":[],"favoriteOptions":[],"totalVisits":1,"totalSales":30000,"totalTakeHome":16200,"averageUnitPrice":30000,"lastVisit":"2026-05-01"},{"id":"1778768785030","customerNo":"C010","name":"イトウ","aliases":[],"media":[],"heavenName":"","memo":"","notes":"","preferences":[],"favoriteHotels":[],"favoriteOptions":[],"totalVisits":1,"totalSales":9500,"totalTakeHome":4500,"averageUnitPrice":9500,"lastVisit":"2026-05-01"},{"id":"1778768884388","customerNo":"C011","name":"アクタガワ","aliases":[],"media":[],"heavenName":"","memo":"","notes":"","preferences":[],"favoriteHotels":[],"favoriteOptions":[],"totalVisits":1,"totalSales":15500,"totalTakeHome":6480,"averageUnitPrice":15500,"lastVisit":"2026-05-01"},{"id":"1778768964057","customerNo":"C012","name":"キムラ","aliases":[],"media":[],"heavenName":"","memo":"ヘブン","notes":"","preferences":[],"favoriteHotels":[],"favoriteOptions":[],"totalVisits":1,"totalSales":26000,"totalTakeHome":12960,"averageUnitPrice":26000,"lastVisit":"2026-05-01"},{"id":"1778769076095","customerNo":"C013","name":"タケウチ","aliases":[],"media":[],"heavenName":"","memo":"ヘブン","notes":"","preferences":[],"favoriteHotels":[],"favoriteOptions":[],"totalVisits":1,"totalSales":19500,"totalTakeHome":10530,"averageUnitPrice":19500,"lastVisit":"2026-05-03"},{"id":"1778769132952","customerNo":"C014","name":"ヒラタ","aliases":[],"media":[],"heavenName":"","memo":"","notes":"","preferences":[],"favoriteHotels":[],"favoriteOptions":[],"totalVisits":1,"totalSales":16000,"totalTakeHome":7695,"averageUnitPrice":16000,"lastVisit":"2026-05-03"},{"id":"1778769199419","customerNo":"C015","name":"オカモト","aliases":[],"media":[],"heavenName":"","memo":"","notes":"","preferences":[],"favoriteHotels":[],"favoriteOptions":[],"totalVisits":1,"totalSales":19500,"totalTakeHome":8910,"averageUnitPrice":19500,"lastVisit":"2026-05-03"},{"id":"1778769335325","customerNo":"C016","name":"ハリガヤ","aliases":[],"media":[],"heavenName":"","memo":"ヘブン","notes":"","preferences":[],"favoriteHotels":[],"favoriteOptions":[],"totalVisits":1,"totalSales":19500,"totalTakeHome":8910,"averageUnitPrice":19500,"lastVisit":"2026-05-07"},{"id":"1778769435421","customerNo":"C017","name":"ヨシダ","aliases":[],"media":[],"heavenName":"","memo":"","notes":"","preferences":[],"favoriteHotels":[],"favoriteOptions":[],"totalVisits":1,"totalSales":9500,"totalTakeHome":4500,"averageUnitPrice":9500,"lastVisit":"2026-05-07"},{"id":"1778769495053","customerNo":"C018","name":"ワキモト","aliases":[],"media":[],"heavenName":"","memo":"","notes":"","preferences":[],"favoriteHotels":[],"favoriteOptions":[],"totalVisits":1,"totalSales":12000,"totalTakeHome":4500,"averageUnitPrice":12000,"lastVisit":"2026-05-07"},{"id":"1778769549899","customerNo":"C019","name":"イトウ","aliases":[],"media":[],"heavenName":"","memo":"","notes":"","preferences":[],"favoriteHotels":[],"favoriteOptions":[],"totalVisits":1,"totalSales":15500,"totalTakeHome":8100,"averageUnitPrice":15500,"lastVisit":"2026-05-07"},{"id":"1778769637573","customerNo":"C020","name":"マエダ","aliases":[],"media":[],"heavenName":"","memo":"ヘブン","notes":"","preferences":[],"favoriteHotels":[],"favoriteOptions":[],"totalVisits":1,"totalSales":19500,"totalTakeHome":8910,"averageUnitPrice":19500,"lastVisit":"2026-05-07"},{"id":"1778804220464","customerNo":"C021","name":"イシカワ","aliases":[],"media":["ヘブン"],"heavenName":"いしかわ23","memo":"","notes":"","preferences":[],"favoriteHotels":[],"favoriteOptions":[],"totalVisits":1,"totalSales":13500,"totalTakeHome":7290,"averageUnitPrice":13500,"lastVisit":"2026-05-13"},{"id":"1778804276166","customerNo":"C022","name":"カンダ","aliases":[],"media":["不明"],"heavenName":"","memo":"","notes":"","preferences":[],"favoriteHotels":[],"favoriteOptions":[],"totalVisits":1,"totalSales":12000,"totalTakeHome":5670,"averageUnitPrice":12000,"lastVisit":"2026-05-13"},{"id":"1778804333798","customerNo":"C023","name":"シミズ","aliases":[],"media":["不明"],"heavenName":"","memo":"","notes":"","preferences":[],"favoriteHotels":[],"favoriteOptions":[],"totalVisits":1,"totalSales":15000,"totalTakeHome":7290,"averageUnitPrice":15000,"lastVisit":"2026-05-13"},{"id":"1778812409934","customerNo":"C024","name":"キヤマ","aliases":[],"media":["ヘブン"],"heavenName":"ともたろうすけ","memo":"","notes":"","preferences":[],"favoriteHotels":[],"favoriteOptions":[],"totalVisits":1,"totalSales":9000,"totalTakeHome":4050,"averageUnitPrice":9000,"lastVisit":"2026-05-15"}];
+
+// ═══════════════════════════════════════════════════════════
+// CALC ENGINE
+// ═══════════════════════════════════════════════════════════
+function calcBack(s, settings) {
+  const cfg = settings || DB.settings;
+  // コース分
+  let minutes = parseInt(s.courseMinutes) || 0;
+  // 割引+分（includeBonusInBackの時のみ加算）
+  if (s.includeBonusInBack && s.bonusMinutes) minutes += parseInt(s.bonusMinutes);
+  // コースバック
+  const courseBack = Math.max(0, (minutes - 10) * 100);
+  // 指名バック
+  const shimeiBack = s.shimeiType === '本指名' ? (cfg.honShimeiBack || 1000) : 0;
+  // OPバック
+  let opBack = 0;
+  // 有料OP
+  const paidOps = Array.isArray(s.paidOptions) ? s.paidOptions : [];
+  paidOps.forEach(op => { opBack += cfg.paidOptions?.[op] || 0; });
+  // 無料OP超過
+  const extra = parseInt(s.extraOptionCount) || 0;
+  const free  = parseInt(s.freeOptionCount)  || 0;
+  if (extra > 0) {
+    opBack += extra * (cfg.extraOptionBack || 500);
+  } else {
+    opBack += Math.max(0, free - (cfg.freeOptionThreshold || 1)) * (cfg.extraOptionBack || 500);
+  }
+  // 雑費前
+  const subtotal = courseBack + shimeiBack + opBack;
+  const zatsubi  = Math.round(subtotal * (cfg.zatsubiRate || 0.1));
+  const takeHome = subtotal - zatsubi;
+  const shopShare = Math.round((parseInt(s.sales) || 0) - takeHome);
+  return { courseBack, shimeiBack, opBack, subtotal, zatsubi, takeHome, shopShare, minutes };
+}
+
+// ═══════════════════════════════════════════════════════════
+// STORAGE
+// ═══════════════════════════════════════════════════════════
+function lsSave(key, val) {
+  try { localStorage.setItem(CFG.lsPrefix + key, JSON.stringify(val)); } catch(e) {}
+}
+function lsLoad(key, def) {
+  try { const v = localStorage.getItem(CFG.lsPrefix + key); return v ? JSON.parse(v) : def; } catch(e) { return def; }
+}
+function saveDB() {
+  lsSave('sessions', DB.sessions);
+  lsSave('reservations', DB.reservations);
+  lsSave('customers', DB.customers);
+  lsSave('settings', DB.settings);
+  lsSave('daily_shifts', DB.daily_shifts);
+}
+
+// ═══════════════════════════════════════════════════════════
+// WEBHOOK / SYNC
+// ═══════════════════════════════════════════════════════════
+function setSyncStatus(status, label) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  if (!dot) return;
+  dot.className = 'sync-dot ' + status;
+  lbl.textContent = label || { ok:'保存済', saving:'保存中…', err:'保存失敗', idle:'--' }[status] || '--';
+}
+
+async function webhookPost(action, payload) {
+  const url = DB.settings.webhookUrl || '';
+  if (!url) { setSyncStatus('idle'); return false; }
+  setSyncStatus('saving');
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, payload }),
+    });
+    const data = await res.json();
+    if (data.status === 'ok') { setSyncStatus('ok'); return true; }
+    throw new Error(data.message);
+  } catch(e) {
+    setSyncStatus('err');
+    addToQueue(action, payload);
+    return false;
+  }
+}
+
+function addToQueue(action, payload) {
+  syncQueue.push({ action, payload, ts: Date.now() });
+  localStorage.setItem('nocte_queue', JSON.stringify(syncQueue));
+  updateQueueBadge();
+}
+
+function updateQueueBadge() {
+  const badge = document.getElementById('queue-badge');
+  const cnt = document.getElementById('queue-count');
+  if (syncQueue.length > 0) {
+    badge.style.display = 'block';
+    cnt.textContent = syncQueue.length;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+async function retryQueue() {
+  const url = DB.settings.webhookUrl || '';
+  if (!url || !syncQueue.length) return;
+  const failed = [];
+  for (const item of syncQueue) {
+    try {
+      const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action: item.action, payload: item.payload }) });
+      const data = await res.json();
+      if (data.status !== 'ok') failed.push(item);
+    } catch { failed.push(item); }
+  }
+  syncQueue = failed;
+  localStorage.setItem('nocte_queue', JSON.stringify(syncQueue));
+  updateQueueBadge();
+  flash(failed.length === 0 ? '再送完了 ✓' : `${failed.length}件失敗`);
+}
+
+function showQueue() {
+  openModal(`
+    <div class="modal-title">📤 未送信キュー (${syncQueue.length}件)</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Webhookへの送信に失敗したデータが${syncQueue.length}件あります</p>
+    ${syncQueue.slice(0,5).map(q=>`<div class="sess-card" style="font-size:11px;margin-bottom:6px;"><b>${q.action}</b><br>${new Date(q.ts).toLocaleString()}</div>`).join('')}
+    <button class="btn" onclick="retryQueue();closeModal()">🔄 全件再送</button>
+    <button class="btn-ghost" style="width:100%;margin-top:8px;" onclick="if(confirm('キューをクリアしますか？')){syncQueue=[];localStorage.setItem('nocte_queue',JSON.stringify([]));updateQueueBadge();closeModal();}">🗑 クリア</button>
+  `);
+}
+
+async function loadFromWebhook() {
+  const url = DB.settings.webhookUrl || '';
+  if (!url) return false;
+  setSyncStatus('saving', '読込中…');
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.status !== 'ok') throw new Error(data.message);
+    const d = data.data;
+    if (d.sessions?.length)     DB.sessions     = d.sessions;
+    if (d.reservations?.length) DB.reservations = d.reservations;
+    if (d.customers?.length)    DB.customers    = d.customers;
+    // settings from sheet
+    if (d.settings?.length) {
+      d.settings.forEach(row => {
+        const k = row.key; let v = row.value;
+        try { v = JSON.parse(v); } catch {}
+        DB.settings[k] = v;
+      });
+    }
+    if (d.daily_shifts?.length) {
+      d.daily_shifts.forEach(s => { DB.daily_shifts[s.date] = { shiftStart: s.shiftStart, shiftEnd: s.shiftEnd, note: s.note }; });
+    }
+    saveDB();
+    setSyncStatus('ok');
+    return true;
+  } catch(e) {
+    setSyncStatus('err');
+    return false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════
+const fmt  = n => Number(n||0).toLocaleString('ja-JP');
+const fmtY = n => '¥' + fmt(n);
+const today = () => new Date().toISOString().slice(0,10);
+const nowTime = () => new Date().toTimeString().slice(0,5);
+const DAYS = ['日','月','火','水','木','金','土'];
+const dow = d => DAYS[new Date(d).getDay()];
+
+function toMin(t) { if(!t) return 0; const[h,m]=t.split(':').map(Number); return h*60+m; }
+function minDiff(a,b) { let d=toMin(b)-toMin(a); if(d<0)d+=1440; return d; }
+function minToH(m) { return (m/60).toFixed(1); }
+function uid() { return Date.now().toString() + Math.random().toString(36).slice(2,6); }
+
+function flash(msg, dur=2200) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.add('hidden'), dur);
+}
+
+function getShift(date) {
+  return DB.daily_shifts[date] || DB.daily_shifts['default'] || { shiftStart:'11:00', shiftEnd:'23:00' };
+}
+
+function sessionsForDate(date) {
+  return DB.sessions.filter(s => s.date === date).sort((a,b) => a.startTime.localeCompare(b.startTime));
+}
+
+function resvForDate(date) {
+  return DB.reservations.filter(r => r.date === date && r.status !== 'cancelled')
+    .sort((a,b) => a.startTime.localeCompare(b.startTime));
+}
+
+function custById(id) { return DB.customers.find(c => c.id === id); }
+
+function nextCustNo() {
+  const nums = DB.customers.map(c => parseInt(c.customerNo?.replace('C','') || 0));
+  return 'C' + String(Math.max(0, ...nums) + 1).padStart(3,'0');
+}
+
+function thisMonthSessions() {
+  const ym = today().slice(0,7);
+  return DB.sessions.filter(s => s.date.slice(0,7) === ym);
+}
+
+// ═══════════════════════════════════════════════════════════
+// LINE PARSER
+// ═══════════════════════════════════════════════════════════
+function parseLine(txt) {
+  const g = key => { const m = txt.match(new RegExp('■' + key + '[\\s：:]+([^\n■]+)')); return m ? m[1].trim() : ''; };
+  const dt = g('日時'); let date='', st='', et='';
+  const dm = dt.match(/(\d{2})\/(\d{2})[^\s　]*[\s　]+(\d{2}:\d{2})-(\d{2}:\d{2})/);
+  if (dm) { date = new Date().getFullYear() + '-' + dm[1] + '-' + dm[2]; st = dm[3]; et = dm[4]; }
+  const pr = g('料金合計'); let sales = 0;
+  const pm=pr.match(/(\d+)万(\d+)/), p1=pr.match(/^(\d+)万/), p2=pr.match(/(\d+)/);
+  if(pm)sales=parseInt(pm[1])*10000+parseInt(pm[2]); else if(p1)sales=parseInt(p1[1])*10000; else if(p2)sales=parseInt(p2[1]);
+  const courseRaw = g('コース').replace(/分.*/,'');
+  const waribiki  = g('割引');
+  const optRaw    = g('オプション');
+  const nameRaw   = g('名前');
+  const name      = nameRaw.split('（')[0].trim() || nameRaw;
+  // parse options
+  let freeOpts=0, extraOpts=0;
+  const paidOpts=[];
+  if (optRaw) {
+    optRaw.split(',').map(s=>s.trim()).filter(Boolean).forEach(o => {
+      const em = o.match(/追加OP(\d+)個/);
+      if(em){extraOpts+=parseInt(em[1]);return;}
+      if(Object.keys(DB.settings.paidOptions||{}).some(k=>o.includes(k))){paidOpts.push(o);return;}
+      freeOpts++;
+    });
+  }
+  // bonus
+  let bonusMin=0, includeBonus=false;
+  if (waribiki) {
+    const bm = waribiki.match(/\+(\d+)分/);
+    if(bm) bonusMin=parseInt(bm[1]);
+    if(!DISCOUNT_NO_BACK.some(p=>waribiki.includes(p))) includeBonus=true;
+  }
+  const isHeaven = txt.includes('ヘブン') || txt.toLowerCase().includes('heaven');
+  return {
+    date, startTime:st, endTime:et, sales,
+    hotel:g('ホテル'), room:g('部屋番'),
+    courseMinutes: parseInt(courseRaw)||0,
+    shimeiType: g('指名') || '写真指名',
+    discountType: waribiki,
+    bonusMinutes: bonusMin,
+    includeBonusInBack: includeBonus,
+    freeOptionCount: freeOpts,
+    extraOptionCount: extraOpts,
+    paidOptions: paidOpts,
+    memo: g('予約メモ'),
+    isHeaven,
+    customerName: name,
+    driver: g('送りドライバー'),
+    optionText: optRaw,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════════════════
+function openModal(html) {
+  const c = document.getElementById('modal-container');
+  c.innerHTML = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal">${html}</div></div>`;
+}
+function closeModal() { document.getElementById('modal-container').innerHTML = ''; }
+
+function renderBreakdown(b, sales) {
+  return `<div class="breakdown">
+    <div class="brow"><span class="bl">コース ${b.minutes}分</span><span class="br">${fmtY(b.courseBack)}</span></div>
+    ${b.shimeiBack>0?`<div class="brow"><span class="bl">指名バック</span><span class="br" style="color:var(--purple)">+${fmtY(b.shimeiBack)}</span></div>`:''}
+    ${b.opBack>0?`<div class="brow"><span class="bl">OPバック</span><span class="br" style="color:var(--green)">+${fmtY(b.opBack)}</span></div>`:''}
+    <div class="divider"></div>
+    <div class="brow bold"><span class="bl">小計</span><span class="br">${fmtY(b.subtotal)}</span></div>
+    <div class="brow"><span class="bl">雑費 -10%</span><span class="br" style="color:var(--red)">-${fmtY(b.zatsubi)}</span></div>
+    <div class="divider"></div>
+    <div class="brow big"><span class="bl">🎉 手取り</span><span class="br" style="color:var(--green)">${fmtY(b.takeHome)}</span></div>
+    ${sales?`<div class="brow"><span class="bl">店落ち</span><span class="br" style="color:var(--amber)">${fmtY(parseInt(sales)-b.takeHome)}</span></div>`:''}
+  </div>`;
+}
+
+function statusBadge(status) {
+  return `<span class="status-badge ${STATUS_CLASS[status]||'s-pending'}">${STATUS_LABELS[status]||status}</span>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAB: DASHBOARD
+// ═══════════════════════════════════════════════════════════
+function renderDash() {
+  const el = document.getElementById('tab-dash');
+  const td = today();
+  const ym = td.slice(0,7);
+  const todaySess = sessionsForDate(td);
+  const todayResv = resvForDate(td);
+  const monthSess = DB.sessions.filter(s => s.date.slice(0,7) === ym);
+
+  const todayTH = todaySess.reduce((a,s) => a + (s.predictedTakeHome||0), 0);
+  const monthTH = monthSess.reduce((a,s) => a + (s.predictedTakeHome||0), 0);
+  const goal    = DB.settings.monthGoal || 300000;
+  const goalPct = Math.min(100, Math.round(monthTH / goal * 100));
+
+  // Heaven
+  const hvCount = monthSess.filter(s => s.isHeaven).length;
+  const star = hvCount>=20?{label:'金★★★',color:'var(--gold)'}:hvCount>=10?{label:'赤★★',color:'var(--star-red)'}:hvCount>=5?{label:'青★',color:'var(--star-blue)'}:{label:'なし',color:'var(--muted)'};
+
+  // Next reservation
+  const upcoming = [...todayResv, ...DB.reservations.filter(r=>r.date>td&&r.status!=='cancelled')]
+    .sort((a,b)=>a.date.localeCompare(b.date)||a.startTime.localeCompare(b.startTime))[0];
+
+  // あといくら
+  const remaining = Math.max(0, goal - monthTH);
+  const daysLeft = (() => { const last=new Date(ym+'-01'); last.setMonth(last.getMonth()+1); last.setDate(0); return last.getDate()-parseInt(td.slice(8)); })();
+  const dailyNeed = daysLeft>0 ? Math.ceil(remaining/daysLeft) : 0;
+
+  // 月末予測
+  const workDays = [...new Set(monthSess.map(s=>s.date))].length;
+  const avgPerDay = workDays>0 ? monthTH/workDays : 0;
+  const totalDays = new Date(parseInt(ym.slice(0,4)), parseInt(ym.slice(5)), 0).getDate();
+  const monthEndPred = Math.round(monthTH + avgPerDay * Math.max(0, daysLeft));
+
+  el.innerHTML = `
+  <!-- 今日 -->
+  <div class="card" style="background:rgba(244,114,182,.07);border-color:rgba(244,114,182,.2);">
+    <div class="card-title"><span class="ico">📅</span>今日 ${td.replace(/-/g,'/')} (${dow(td)})</div>
+    <div class="kpi-grid">
+      <div class="kpi"><label>確定手取り</label><div class="val" style="color:var(--green)">${fmtY(todayTH)}</div></div>
+      <div class="kpi"><label>接客本数</label><div class="val" style="color:var(--blue)">${todaySess.length}本</div></div>
+    </div>
+    ${todayResv.length>0?`<div class="kpi-grid">
+      <div class="kpi"><label>予約本数</label><div class="val" style="color:var(--amber)">${todayResv.length}本</div></div>
+      ${upcoming&&upcoming.date===td?`<div class="kpi"><label>次の予約</label><div class="val" style="font-size:14px;">${upcoming.startTime} ${upcoming.customerName||''}様</div></div>`:'<div class="kpi"></div>'}
+    </div>`:''}
+    ${todayTH>0&&goal>0?`
+    <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">今日の目標まで</div>
+    <div style="font-size:13px;color:var(--accent);font-weight:700;">${remaining>0?fmtY(remaining)+'不足':'🎉 月目標達成！'}</div>`:''}
+  </div>
+
+  <!-- 今月 -->
+  <div class="card">
+    <div class="card-title"><span class="ico">📈</span>今月 ${ym.replace('-','年')}月</div>
+    <div class="kpi-grid">
+      <div class="kpi" style="background:rgba(244,114,182,.08);border-color:rgba(244,114,182,.25);"><label>累計手取り</label><div class="val" style="color:var(--accent)">${fmtY(monthTH)}</div></div>
+      <div class="kpi"><label>月目標</label><div class="val">${fmtY(goal)}</div></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px;">
+      <span>進捗 ${goalPct}%</span><span>残 ${fmtY(remaining)}</span>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar" style="width:${goalPct}%;background:linear-gradient(90deg,var(--accent2),var(--green))"></div></div>
+    <div class="kpi-grid-3" style="margin-top:10px;">
+      <div class="kpi-sm"><label>接客数</label><div class="val" style="color:var(--blue)">${monthSess.length}本</div></div>
+      <div class="kpi-sm"><label>残り日数</label><div class="val">${daysLeft}日</div></div>
+      <div class="kpi-sm"><label>1日必要</label><div class="val" style="color:var(--amber)">${fmtY(dailyNeed)}</div></div>
+    </div>
+  </div>
+
+  <!-- Heaven -->
+  <div class="card" style="background:${star.color}15;border-color:${star.color}44;">
+    <div class="card-title"><span class="ico">⭐</span>ヘブン Web予約</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div>
+        <div style="font-size:28px;font-weight:900;color:${star.color}">${hvCount}本</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">
+          ${hvCount<5?'青★まで あと'+(5-hvCount)+'本':hvCount<10?'赤★まで あと'+(10-hvCount)+'本':hvCount<20?'金★まで あと'+(20-hvCount)+'本':'🎉 金★★★達成！'}
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:16px;font-weight:700;color:${star.color}">${star.label}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.8;">青★ 5本〜<br>赤★★ 10本〜<br>金★★★ 20本〜</div>
+      </div>
+    </div>
+    <div class="star-bar"><div class="star-fill" style="width:${Math.min(100,hvCount/20*100)}%;background:linear-gradient(90deg,var(--star-blue),var(--star-red),var(--gold))"></div></div>
+  </div>
+
+  <!-- 予測 -->
+  <div class="card">
+    <div class="card-title"><span class="ico">🔮</span>月末予測</div>
+    <div class="kpi-grid">
+      <div class="kpi"><label>月末予測</label><div class="val" style="color:var(--purple)">${fmtY(monthEndPred)}</div></div>
+      <div class="kpi"><label>日平均</label><div class="val">${fmtY(Math.round(avgPerDay))}</div></div>
+    </div>
+  </div>
+
+  <!-- 予約LINE取り込み -->
+  <div class="card">
+    <div class="card-title"><span class="ico">📋</span>LINE予約取り込み</div>
+    <textarea id="line-input" style="height:140px;font-family:monospace;font-size:12px;line-height:1.6;" placeholder="予約が入りました。&#10;&#10;■日時 ： 05/15(金) 18:00-19:40&#10;■料金合計 ： 1万5500円&#10;■コース ： 100分&#10;...&#10;&#10;↑そのままペーストOK"></textarea>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" style="margin-top:8px;" onclick="parseLineInput()">🔍 解析 → 予約追加</button>
+      <button class="btn" style="margin-top:8px;background:linear-gradient(135deg,#059669,var(--green));" onclick="parseLineInputAsSession()">✅ 解析 → 実績追加</button>
+    </div>
+  </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAB: RESERVATIONS
+// ═══════════════════════════════════════════════════════════
+function renderResv() {
+  const el = document.getElementById('tab-resv');
+  const active = DB.reservations.filter(r => r.status !== 'cancelled').sort((a,b) => a.date.localeCompare(b.date)||a.startTime.localeCompare(b.startTime));
+  const cancelled = DB.reservations.filter(r => r.status === 'cancelled');
+
+  el.innerHTML = `
+  <div style="display:flex;gap:8px;margin-bottom:14px;">
+    <button class="btn" style="margin-top:0;" onclick="openResvForm()">＋ 予約追加</button>
+  </div>
+  ${active.length===0?'<div class="empty">未消化予約がありません</div>':active.map(r => resvCard(r)).join('')}
+  ${cancelled.length>0?`
+  <details style="margin-top:12px;">
+    <summary style="font-size:12px;color:var(--muted);cursor:pointer;padding:8px 0;">キャンセル済 ${cancelled.length}件</summary>
+    ${cancelled.map(r=>resvCard(r)).join('')}
+  </details>`:''}
+  `;
+}
+
+function resvCard(r) {
+  const b = calcBack(r);
+  const cls = r.status==='cancelled'?'resv-cancelled':r.status==='confirmed'||r.status==='arrived'?'resv-confirmed':'resv-pending';
+  const td = today();
+  const isToday = r.date === td;
+  return `<div class="resv-card ${cls}" style="margin-bottom:10px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+      <div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+          ${isToday?'<span class="tag tag-green">今日</span>':''}
+          <span style="font-weight:700;font-size:15px;">${r.date.replace(/-/g,'/')} ${r.startTime}〜${r.endTime||''}</span>
+          ${r.isHeaven?'<span style="font-size:13px;">⭐</span>':''}
+        </div>
+        <div style="font-size:12px;color:var(--muted);">${r.courseMinutes}分 · ${r.shimeiType||''}${r.discountType?' · '+r.discountType:''}</div>
+        ${r.customerName?`<div style="font-size:12px;color:var(--muted);margin-top:2px;">👤 ${r.customerName}</div>`:''}
+        ${r.hotel?`<div style="font-size:11px;color:var(--muted);margin-top:2px;">🏨 ${r.hotel}${r.room?' #'+r.room:''}</div>`:''}
+        ${r.memo?`<div style="font-size:11px;color:var(--muted);margin-top:2px;">📝 ${r.memo}</div>`:''}
+      </div>
+      <div style="text-align:right;margin-left:10px;">
+        ${statusBadge(r.status)}
+        <div style="font-size:10px;color:var(--muted);margin-top:4px;">バック予測</div>
+        <div style="font-size:18px;font-weight:700;color:var(--green);">${fmtY(b.takeHome)}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+      <button class="btn-sm" style="font-size:11px;" onclick="changeResvStatus('${r.id}')">状態変更</button>
+      ${r.status!=='cancelled'?`<button class="btn-sm" style="background:linear-gradient(135deg,#059669,var(--green));font-size:11px;" onclick="convertToSession('${r.id}')">✅ 実績へ</button>`:''}
+      <button class="btn-blue" onclick="editResv('${r.id}')">編集</button>
+      <button class="btn-danger" onclick="deleteResv('${r.id}')">削除</button>
+    </div>
+  </div>`;
+}
+
+function changeResvStatus(id) {
+  const r = DB.reservations.find(x => x.id===id);
+  if (!r) return;
+  const statuses = ['pending','room_wait','confirmed','arrived','cancelled'];
+  openModal(`
+    <div class="modal-title">状態変更: ${r.customerName||''}様</div>
+    ${statuses.map(s=>`<button class="btn-ghost" style="width:100%;margin-bottom:8px;text-align:left;${r.status===s?'border-color:var(--accent);color:var(--accent);':''}" onclick="setResvStatus('${id}','${s}');closeModal();">
+      ${STATUS_LABELS[s]} ${r.status===s?'← 現在':''}
+    </button>`).join('')}
+  `);
+}
+
+async function setResvStatus(id, status) {
+  const idx = DB.reservations.findIndex(x => x.id===id);
+  if (idx<0) return;
+  DB.reservations[idx].status = status;
+  DB.reservations[idx].updatedAt = new Date().toISOString();
+  saveDB(); renderResv();
+  await webhookPost('updateReservation', DB.reservations[idx]);
+  flash('状態を更新しました');
+}
+
+async function convertToSession(resvId) {
+  const r = DB.reservations.find(x => x.id===resvId);
+  if (!r) return;
+  // 実績フォームを開く（予約データを初期値として）
+  openSessionForm({ ...r, id: uid(), createdAt: new Date().toISOString() }, resvId);
+}
+
+async function deleteResv(id) {
+  if (!confirm('予約を削除しますか？')) return;
+  DB.reservations = DB.reservations.filter(x => x.id!==id);
+  saveDB(); renderResv();
+  await webhookPost('deleteReservation', { id });
+  flash('削除しました');
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAB: SESSIONS (実績)
+// ═══════════════════════════════════════════════════════════
+function renderSess(filterDate) {
+  const el = document.getElementById('tab-sess');
+  const dateFilter = filterDate || el.dataset.dateFilter || '';
+
+  const sessions = (dateFilter
+    ? DB.sessions.filter(s => s.date === dateFilter)
+    : DB.sessions
+  ).slice().sort((a,b) => b.date.localeCompare(a.date)||a.startTime.localeCompare(b.startTime));
+
+  // Group by date
+  const byDate = {};
+  sessions.forEach(s => { if(!byDate[s.date]) byDate[s.date]=[]; byDate[s.date].push(s); });
+
+  el.innerHTML = `
+  <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
+    <button class="btn" style="margin-top:0;flex:1;" onclick="openSessionForm()">＋ 実績追加</button>
+    <input type="date" style="width:140px;padding:8px;" value="${dateFilter}" onchange="renderSess(this.value);document.getElementById('tab-sess').dataset.dateFilter=this.value;">
+  </div>
+  ${Object.keys(byDate).length===0?'<div class="empty">実績がありません</div>':Object.entries(byDate).sort(([a],[b])=>b.localeCompare(a)).map(([date,ss]) => {
+    const dayTH = ss.reduce((a,s)=>a+(s.predictedTakeHome||0),0);
+    const daySales = ss.reduce((a,s)=>a+(parseInt(s.sales)||0),0);
+    return `
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 2px 8px;border-bottom:1px solid var(--border);margin-bottom:8px;">
+        <span style="font-weight:700;font-size:14px;">${date.replace(/-/g,'/')} (${dow(date)})</span>
+        <div style="text-align:right;">
+          <div style="font-size:10px;color:var(--muted);">売上 ${fmtY(daySales)}</div>
+          <div style="font-size:16px;font-weight:700;color:var(--green);">${fmtY(dayTH)}</div>
+        </div>
+      </div>
+      ${ss.map(s => sessCard(s)).join('')}
+      <button class="btn-ghost" style="width:100%;margin-top:4px;font-size:12px;" onclick="openReport('${date}')">📤 ${date.replace(/-/g,'/')} 報告文生成</button>
+    </div>`;
+  }).join('')}`;
+}
+
+function sessCard(s) {
+  const b = calcBack(s);
+  const cust = custById(s.customerId);
+  return `<div class="sess-card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div style="flex:1;">
+        <div class="sess-time">
+          ${s.startTime}〜${s.endTime||''}
+          ${s.endTime?`<span class="tag tag-muted">${minToH(minDiff(s.startTime,s.endTime))}h</span>`:''}
+          ${s.isHeaven?'<span style="font-size:13px;">⭐</span>':''}
+        </div>
+        <div class="sess-info">${b.minutes}分 · ${s.shimeiType||'写真指名'}${s.discountType?' · '+s.discountType:''}</div>
+        ${s.hotel?`<div class="sess-info">${s.hotel}${s.room?' #'+s.room:''}</div>`:''}
+        ${cust?`<div style="font-size:11px;color:var(--accent);margin-top:2px;">👤 ${cust.customerNo} ${cust.name}</div>`:''}
+        ${s.memo?`<div class="sess-info">📝 ${s.memo}</div>`:''}
+      </div>
+      <div class="sess-money" style="margin-left:10px;min-width:90px;">
+        ${s.sales?`<div style="font-size:10px;color:var(--muted);">売上 ${fmtY(s.sales)}</div>`:''}
+        <div class="sess-takehome">${fmtY(s.predictedTakeHome)}</div>
+        <div style="font-size:10px;color:var(--amber);">店落ち ${fmtY(parseInt(s.sales||0)-s.predictedTakeHome)}</div>
+      </div>
+    </div>
+    <div class="sess-actions">
+      <button class="btn-blue" onclick="editSession('${s.id}')">編集</button>
+      <button class="btn-danger" onclick="deleteSession('${s.id}')">削除</button>
+      <button class="btn-ghost" style="font-size:11px;padding:5px 10px;" onclick="showBreakdown('${s.id}')">内訳</button>
+    </div>
+  </div>`;
+}
+
+function showBreakdown(id) {
+  const s = DB.sessions.find(x=>x.id===id);
+  if(!s) return;
+  const b = calcBack(s);
+  openModal(`
+    <div class="modal-title">バック内訳</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:10px;">${s.date} ${s.startTime} ${s.customerName}様</div>
+    ${renderBreakdown(b, s.sales)}
+    <button class="btn-ghost" style="width:100%;margin-top:10px;" onclick="closeModal()">閉じる</button>
+  `);
+}
+
+async function deleteSession(id) {
+  if (!confirm('実績を削除しますか？')) return;
+  DB.sessions = DB.sessions.filter(x => x.id!==id);
+  saveDB(); renderSess();
+  await webhookPost('deleteSession', { id });
+  flash('削除しました');
+}
+
+// ═══════════════════════════════════════════════════════════
+// SESSION FORM
+// ═══════════════════════════════════════════════════════════
+function openSessionForm(init, fromResvId) {
+  const s = init || { id:uid(), date:today(), startTime:'', endTime:'', courseMinutes:60, sales:0,
+    shimeiType:'写真指名', discountType:'', bonusMinutes:0, includeBonusInBack:false,
+    freeOptionCount:0, extraOptionCount:0, paidOptions:[], memo:'', isHeaven:false,
+    customerId:'', customerName:'', hotel:'', room:'' };
+  const isNew = !init || fromResvId;
+  const b = calcBack(s);
+  const paidOpKeys = Object.keys(DB.settings.paidOptions||{顔射:1000,写メ:1000,ムービー:2000,ごっくん:2000,AF:5000});
+
+  openModal(`
+    <div class="modal-title">${isNew?'✅ 実績追加':'✏️ 実績編集'}</div>
+    <div class="sec-label">📅 日時</div>
+    <div class="fr"><label>日付</label><div class="val"><input type="date" id="sf-date" value="${s.date}"></div></div>
+    <div class="fr"><label>開始〜終了</label><div class="val">
+      <input type="time" id="sf-st" value="${s.startTime}" style="width:90px;">
+      <span style="color:var(--muted);">〜</span>
+      <input type="time" id="sf-et" value="${s.endTime||''}" style="width:90px;">
+    </div></div>
+    <div class="sec-label">💰 接客情報</div>
+    <div class="fr"><label>コース(分)</label><div class="val"><input type="number" id="sf-course" value="${s.courseMinutes}" style="width:80px;" oninput="updateSFBreakdown()"></div></div>
+    <div class="fr"><label>売上(円)</label><div class="val"><input type="number" id="sf-sales" value="${s.sales}" style="width:120px;"></div></div>
+    <div class="fr"><label>指名種別</label><div class="val">
+      <div class="chips">
+        ${['フリー','写真指名','本指名'].map(t=>`<button class="chip${s.shimeiType===t?' active':''}" onclick="document.querySelectorAll('.sf-shimei').forEach(b=>b.classList.remove('active'));this.classList.add('active');" data-val="${t}" class="chip sf-shimei${s.shimeiType===t?' active':''}">${t}</button>`).join('')}
+      </div>
+    </div></div>
+    <div class="fr"><label>割引</label><div class="val"><input type="text" id="sf-discount" value="${s.discountType||''}" placeholder="はじめて割 など" oninput="updateSFBreakdown()"></div></div>
+    <div class="fr"><label>+分</label><div class="val">
+      <input type="number" id="sf-bonus" value="${s.bonusMinutes||0}" style="width:70px;" oninput="updateSFBreakdown()">
+      <span style="font-size:12px;color:var(--muted);">分</span>
+      <label style="min-width:auto;display:flex;align-items:center;gap:4px;font-size:12px;margin-left:8px;">
+        <input type="checkbox" id="sf-include-bonus" ${s.includeBonusInBack?'checked':''} onchange="updateSFBreakdown()">バックに含む
+      </label>
+    </div></div>
+    <div class="fr"><label>無料OP数</label><div class="val"><input type="number" id="sf-free-op" value="${s.freeOptionCount}" style="width:70px;" oninput="updateSFBreakdown()"></div></div>
+    <div class="fr"><label>追加OP数</label><div class="val"><input type="number" id="sf-extra-op" value="${s.extraOptionCount}" style="width:70px;" oninput="updateSFBreakdown()"></div></div>
+    <div class="fr"><label>有料OP</label><div class="val">
+      <div class="chips" id="sf-paid-ops">
+        ${paidOpKeys.map(k=>`<button class="chip${(s.paidOptions||[]).includes(k)?' active':''}" onclick="this.classList.toggle('active');updateSFBreakdown();" data-val="${k}">${k}</button>`).join('')}
+      </div>
+    </div></div>
+    <div id="sf-breakdown">${renderBreakdown(b, s.sales)}</div>
+    <div class="sec-label">🏨 予約情報</div>
+    <div class="fr"><label>顧客</label><div class="val">
+      <select id="sf-cust" style="flex:1;">
+        <option value="">-- 選択 --</option>
+        ${DB.customers.map(c=>`<option value="${c.id}" ${s.customerId===c.id?'selected':''}>${c.customerNo} ${c.name}</option>`).join('')}
+      </select>
+    </div></div>
+    <div class="fr"><label>ホテル</label><div class="val"><input type="text" id="sf-hotel" value="${s.hotel||''}"></div></div>
+    <div class="fr"><label>部屋番</label><div class="val"><input type="text" id="sf-room" value="${s.room||''}" style="width:100px;"></div></div>
+    <div class="fr"><label>ヘブン</label><div class="val"><label style="min-width:auto;display:flex;align-items:center;gap:6px;font-size:13px;"><input type="checkbox" id="sf-heaven" ${s.isHeaven?'checked':''}>⭐ ヘブン予約</label></div></div>
+    <div class="fr"><label>メモ</label><div class="val"><input type="text" id="sf-memo" value="${s.memo||''}"></div></div>
+    <div class="fr"><label>実測店落ち(円)</label><div class="val"><input type="number" id="sf-actual-shop" value="${s.actualShopShare||''}" placeholder="未入力=予測値使用" style="width:120px;"></div></div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn-ghost" onclick="closeModal()">キャンセル</button>
+      <button class="btn" style="flex:2;margin-top:0;" onclick="saveSessionForm('${s.id}','${fromResvId||''}')">保存する</button>
+    </div>
+  `);
+}
+
+function updateSFBreakdown() {
+  const course = parseInt(document.getElementById('sf-course')?.value)||0;
+  const discount = document.getElementById('sf-discount')?.value||'';
+  const bonus = parseInt(document.getElementById('sf-bonus')?.value)||0;
+  const includeBonus = document.getElementById('sf-include-bonus')?.checked||false;
+  const freeOp = parseInt(document.getElementById('sf-free-op')?.value)||0;
+  const extraOp = parseInt(document.getElementById('sf-extra-op')?.value)||0;
+  const paidOps = [...document.querySelectorAll('#sf-paid-ops .chip.active')].map(b=>b.dataset.val);
+  const sales = parseInt(document.getElementById('sf-sales')?.value)||0;
+  const b = calcBack({ courseMinutes:course, discountType:discount, bonusMinutes:bonus, includeBonusInBack:includeBonus, freeOptionCount:freeOp, extraOptionCount:extraOp, paidOptions:paidOps, shimeiType: document.querySelector('.sf-shimei.active')?.dataset.val||'写真指名' });
+  const el = document.getElementById('sf-breakdown');
+  if (el) el.innerHTML = renderBreakdown(b, sales);
+}
+
+async function saveSessionForm(id, fromResvId) {
+  const course = parseInt(document.getElementById('sf-course')?.value)||0;
+  const sales  = parseInt(document.getElementById('sf-sales')?.value)||0;
+  const shimei = document.querySelector('.sf-shimei.active')?.dataset.val||'写真指名';
+  const discount = document.getElementById('sf-discount')?.value||'';
+  const bonus = parseInt(document.getElementById('sf-bonus')?.value)||0;
+  const includeBonus = document.getElementById('sf-include-bonus')?.checked||false;
+  const freeOp = parseInt(document.getElementById('sf-free-op')?.value)||0;
+  const extraOp = parseInt(document.getElementById('sf-extra-op')?.value)||0;
+  const paidOps = [...document.querySelectorAll('#sf-paid-ops .chip.active')].map(b=>b.dataset.val);
+  const custId = document.getElementById('sf-cust')?.value||'';
+  const hotel  = document.getElementById('sf-hotel')?.value||'';
+  const room   = document.getElementById('sf-room')?.value||'';
+  const heaven = document.getElementById('sf-heaven')?.checked||false;
+  const memo   = document.getElementById('sf-memo')?.value||'';
+  const actualShop = parseInt(document.getElementById('sf-actual-shop')?.value)||null;
+  const date   = document.getElementById('sf-date')?.value||today();
+  const st     = document.getElementById('sf-st')?.value||'';
+  const et     = document.getElementById('sf-et')?.value||'';
+
+  const b = calcBack({ courseMinutes:course, discountType:discount, bonusMinutes:bonus, includeBonusInBack:includeBonus, freeOptionCount:freeOp, extraOptionCount:extraOp, paidOptions:paidOps, shimeiType:shimei });
+
+  const actualTH = actualShop!=null ? sales - actualShop : null;
+  const cust = custId ? custById(custId) : null;
+
+  const rec = {
+    id, date, startTime:st, endTime:et,
+    customerId:custId, customerName: cust?.name||'',
+    hotel, room, courseMinutes:course, sales, shimeiType:shimei,
+    discountType:discount, bonusMinutes:bonus, includeBonusInBack:includeBonus,
+    freeOptionCount:freeOp, extraOptionCount:extraOp, paidOptions:paidOps,
+    memo, isHeaven:heaven,
+    predictedBack:b.subtotal, predictedTakeHome:b.takeHome, predictedShopShare:b.zatsubi,
+    actualShopShare:actualShop, actualTakeHome:actualTH,
+    variance: actualTH!=null ? actualTH - b.takeHome : null,
+    calcStatus: actualShop!=null ? 'actual' : 'predicted',
+    createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+  };
+
+  const existing = DB.sessions.findIndex(x=>x.id===id);
+  if (existing>=0) DB.sessions[existing]=rec; else DB.sessions.push(rec);
+
+  // Convert from reservation if needed
+  if (fromResvId) {
+    DB.reservations = DB.reservations.filter(x=>x.id!==fromResvId);
+    await webhookPost('convertReservation', { reservationId:fromResvId, sessionData:rec });
+  } else {
+    await webhookPost(existing>=0?'updateSession':'addSession', rec);
+  }
+
+  // Update customer stats
+  if (custId) updateCustStats(custId);
+
+  saveDB(); closeModal(); renderSess(); renderDash();
+  flash('保存しました ✓');
+}
+
+function editSession(id) {
+  const s = DB.sessions.find(x=>x.id===id);
+  if(s) openSessionForm(s);
+}
+
+function updateCustStats(custId) {
+  const idx = DB.customers.findIndex(c=>c.id===custId);
+  if(idx<0) return;
+  const visits = DB.sessions.filter(s=>s.customerId===custId);
+  DB.customers[idx].totalVisits = visits.length;
+  DB.customers[idx].totalSales  = visits.reduce((a,s)=>a+(parseInt(s.sales)||0),0);
+  DB.customers[idx].totalTakeHome = visits.reduce((a,s)=>a+(s.predictedTakeHome||0),0);
+  DB.customers[idx].averageUnitPrice = visits.length ? Math.round(DB.customers[idx].totalSales/visits.length) : 0;
+  DB.customers[idx].lastVisit = visits.sort((a,b)=>b.date.localeCompare(a.date))[0]?.date || '';
+}
+
+// ═══════════════════════════════════════════════════════════
+// RESERVATION FORM
+// ═══════════════════════════════════════════════════════════
+function openResvForm(init) {
+  const r = init || { id:uid(), date:today(), startTime:'', endTime:'', courseMinutes:60, sales:0,
+    shimeiType:'写真指名', discountType:'', bonusMinutes:0, includeBonusInBack:false,
+    freeOptionCount:0, extraOptionCount:0, paidOptions:[], optionText:'',
+    memo:'', isHeaven:false, customerName:'', hotel:'', room:'', status:'pending' };
+
+  openModal(`
+    <div class="modal-title">📋 予約追加</div>
+    <div class="sec-label">📅 日時</div>
+    <div class="fr"><label>日付</label><div class="val"><input type="date" id="rf-date" value="${r.date}"></div></div>
+    <div class="fr"><label>開始〜終了</label><div class="val">
+      <input type="time" id="rf-st" value="${r.startTime}" style="width:90px;">
+      <span style="color:var(--muted);">〜</span>
+      <input type="time" id="rf-et" value="${r.endTime||''}" style="width:90px;">
+    </div></div>
+    <div class="sec-label">📝 予約内容</div>
+    <div class="fr"><label>コース(分)</label><div class="val"><input type="number" id="rf-course" value="${r.courseMinutes}" style="width:80px;"></div></div>
+    <div class="fr"><label>売上(円)</label><div class="val"><input type="number" id="rf-sales" value="${r.sales}" style="width:120px;"></div></div>
+    <div class="fr"><label>指名</label><div class="val">
+      <div class="chips">${['フリー','写真指名','本指名'].map(t=>`<button class="chip rf-shimei${r.shimeiType===t?' active':''}" onclick="document.querySelectorAll('.rf-shimei').forEach(b=>b.classList.remove('active'));this.classList.add('active');" data-val="${t}">${t}</button>`).join('')}</div>
+    </div></div>
+    <div class="fr"><label>割引</label><div class="val"><input type="text" id="rf-discount" value="${r.discountType||''}" placeholder="はじめて割 など"></div></div>
+    <div class="fr"><label>+分</label><div class="val">
+      <input type="number" id="rf-bonus" value="${r.bonusMinutes||0}" style="width:70px;">分
+      <label style="min-width:auto;display:flex;align-items:center;gap:4px;font-size:12px;margin-left:8px;"><input type="checkbox" id="rf-include-bonus" ${r.includeBonusInBack?'checked':''}>バックに含む</label>
+    </div></div>
+    <div class="fr"><label>オプション</label><div class="val"><input type="text" id="rf-opts" value="${r.optionText||''}" placeholder="バイブ, 即尺 など"></div></div>
+    <div class="fr"><label>お客様名</label><div class="val"><input type="text" id="rf-cname" value="${r.customerName||''}"></div></div>
+    <div class="fr"><label>ホテル</label><div class="val"><input type="text" id="rf-hotel" value="${r.hotel||''}"></div></div>
+    <div class="fr"><label>部屋番</label><div class="val"><input type="text" id="rf-room" value="${r.room||''}" style="width:100px;"></div></div>
+    <div class="fr"><label>ヘブン</label><div class="val"><label style="min-width:auto;display:flex;align-items:center;gap:6px;font-size:13px;"><input type="checkbox" id="rf-heaven" ${r.isHeaven?'checked':''}>⭐ ヘブン予約</label></div></div>
+    <div class="fr"><label>メモ</label><div class="val"><input type="text" id="rf-memo" value="${r.memo||''}"></div></div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn-ghost" onclick="closeModal()">キャンセル</button>
+      <button class="btn" style="flex:2;margin-top:0;" onclick="saveResvForm('${r.id}')">保存する</button>
+    </div>
+  `);
+}
+
+async function saveResvForm(id) {
+  const bonus = parseInt(document.getElementById('rf-bonus')?.value)||0;
+  const includeBonus = document.getElementById('rf-include-bonus')?.checked||false;
+  const optText = document.getElementById('rf-opts')?.value||'';
+  let freeOp=0,extraOp=0;
+  optText.split(',').map(s=>s.trim()).filter(Boolean).forEach(o=>{
+    const em=o.match(/追加OP(\d+)個/);if(em){extraOp+=parseInt(em[1]);return;}
+    if(Object.keys(DB.settings.paidOptions||{}).some(k=>o.includes(k)))return;
+    freeOp++;
+  });
+  const r = {
+    id,
+    date: document.getElementById('rf-date')?.value||today(),
+    startTime: document.getElementById('rf-st')?.value||'',
+    endTime: document.getElementById('rf-et')?.value||'',
+    courseMinutes: parseInt(document.getElementById('rf-course')?.value)||0,
+    sales: parseInt(document.getElementById('rf-sales')?.value)||0,
+    shimeiType: document.querySelector('.rf-shimei.active')?.dataset.val||'写真指名',
+    discountType: document.getElementById('rf-discount')?.value||'',
+    bonusMinutes: bonus,
+    includeBonusInBack: includeBonus,
+    freeOptionCount: freeOp,
+    extraOptionCount: extraOp,
+    paidOptions: [],
+    optionText: optText,
+    memo: document.getElementById('rf-memo')?.value||'',
+    isHeaven: document.getElementById('rf-heaven')?.checked||false,
+    customerName: document.getElementById('rf-cname')?.value||'',
+    hotel: document.getElementById('rf-hotel')?.value||'',
+    room: document.getElementById('rf-room')?.value||'',
+    status: 'pending',
+    createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+  };
+  const existing = DB.reservations.findIndex(x=>x.id===id);
+  if(existing>=0) DB.reservations[existing]=r; else DB.reservations.push(r);
+  saveDB(); closeModal(); renderResv();
+  await webhookPost(existing>=0?'updateReservation':'addReservation', r);
+  flash('予約を保存しました ✓');
+}
+
+function editResv(id) {
+  const r = DB.reservations.find(x=>x.id===id);
+  if(r) openResvForm(r);
+}
+
+// ═══════════════════════════════════════════════════════════
+// LINE PARSE → FORM
+// ═══════════════════════════════════════════════════════════
+function parseLineInput() {
+  const txt = document.getElementById('line-input')?.value||'';
+  if(!txt.trim()){flash('テキストを入力してください');return;}
+  const p = parseLine(txt);
+  openResvForm({ id:uid(), ...p, status:'pending', optionText:p.optionText||'' });
+}
+
+function parseLineInputAsSession() {
+  const txt = document.getElementById('line-input')?.value||'';
+  if(!txt.trim()){flash('テキストを入力してください');return;}
+  const p = parseLine(txt);
+  openSessionForm({ id:uid(), ...p });
+}
+
+// ═══════════════════════════════════════════════════════════
+// REPORT GENERATOR
+// ═══════════════════════════════════════════════════════════
+function openReport(date) {
+  const ss = sessionsForDate(date);
+  if(!ss.length){flash('この日の実績がありません');return;}
+  const shift = getShift(date);
+  let th=0,z=0,sales=0;
+  const lines = [`お疲れ様です！`, `本日終了しました！`, ``];
+  lines.push(`${ss.length}本`);
+  sales = ss.reduce((a,s)=>a+(parseInt(s.sales)||0),0);
+  th    = ss.reduce((a,s)=>a+(s.predictedTakeHome||0),0);
+  z     = ss.reduce((a,s)=>a+(s.predictedShopShare||0),0);
+  lines.push(`客払い ${fmtY(sales)}`);
+  lines.push(`手取り ${fmtY(th)}`);
+  lines.push(`雑費 ${fmtY(z)}`);
+  lines.push(``);
+  ss.forEach(s => {
+    lines.push(`${s.startTime}-${s.endTime||''}`);
+    lines.push(`${s.courseMinutes}分 ${s.shimeiType||''}${s.discountType?' ('+s.discountType+')':''}`);
+    lines.push(fmtY(s.predictedTakeHome));
+    lines.push('');
+  });
+  const report = lines.join('\n');
+  openModal(`
+    <div class="modal-title">📤 報告文 ${date}</div>
+    <pre class="report-box">${report}</pre>
+    <button class="btn" onclick="navigator.clipboard.writeText(document.querySelector('.report-box').textContent).then(()=>{flash('コピーしました ✓');})">📋 コピー</button>
+    <button class="btn-ghost" style="width:100%;margin-top:8px;" onclick="closeModal()">閉じる</button>
+  `);
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAB: CALENDAR
+// ═══════════════════════════════════════════════════════════
+function renderCal() {
+  const el = document.getElementById('tab-cal');
+  const [year, month] = calMonth.split('-').map(Number);
+  const first = new Date(year, month-1, 1);
+  const last  = new Date(year, month, 0);
+  const startDow = first.getDay();
+
+  // Build day data
+  const dayData = {};
+  DB.sessions.filter(s=>s.date.slice(0,7)===calMonth).forEach(s=>{
+    const d=s.date; if(!dayData[d]) dayData[d]={th:0,n:0,hv:0,hasResv:false};
+    dayData[d].th+=s.predictedTakeHome||0; dayData[d].n++; if(s.isHeaven)dayData[d].hv++;
+  });
+  DB.reservations.filter(r=>r.date.slice(0,7)===calMonth&&r.status!=='cancelled').forEach(r=>{
+    const d=r.date; if(!dayData[d]) dayData[d]={th:0,n:0,hv:0,hasResv:false};
+    dayData[d].hasResv=true;
+  });
+
+  const cells = [];
+  for(let i=0;i<startDow;i++) cells.push('<div class="cal-day empty"></div>');
+  for(let d=1;d<=last.getDate();d++){
+    const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dd = dayData[dateStr];
+    const isToday = dateStr===today();
+    let cls = 'c0';
+    if(dd?.th>=40000) cls='c4'; else if(dd?.th>=30000) cls='c3'; else if(dd?.th>=20000) cls='c2'; else if(dd?.th>0) cls='c1';
+    else if(dd?.hasResv) cls='resv-only';
+    const dow_ = (startDow+d-1)%7;
+    const dowColor = dow_===0?'var(--red)':dow_===6?'var(--blue)':'';
+    cells.push(`<div class="cal-day ${cls}${isToday?' today':''}" onclick="openDayDetail('${dateStr}')">
+      <div class="dn" style="${dowColor?'color:'+dowColor:''}">${d}</div>
+      ${dd?.th>0?`<div class="dm">${fmtY(dd.th)}</div><div class="dc">${dd.n}本${dd.hv>0?' ⭐'+dd.hv:''}</div>`:''}
+      ${!dd?.th&&dd?.hasResv?'<div style="font-size:9px;color:var(--blue);">予約</div>':''}
+    </div>`);
+  }
+
+  el.innerHTML = `
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <button class="btn-ghost" style="padding:8px 14px;" onclick="calMonth=new Date(new Date(calMonth+'-01').setMonth(new Date(calMonth+'-01').getMonth()-1)).toISOString().slice(0,7);renderCal()">‹ 前月</button>
+    <span style="font-weight:700;font-size:16px;">${year}年${month}月</span>
+    <button class="btn-ghost" style="padding:8px 14px;" onclick="calMonth=new Date(new Date(calMonth+'-01').setMonth(new Date(calMonth+'-01').getMonth()+1)).toISOString().slice(0,7);renderCal()">翌月 ›</button>
+  </div>
+  <div class="cal-grid">${['日','月','火','水','木','金','土'].map((d,i)=>`<div class="cal-dow" style="${i===0?'color:var(--red)':i===6?'color:var(--blue)':''}">${d}</div>`).join('')}</div>
+  <div class="cal-grid">${cells.join('')}</div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;font-size:10px;color:var(--muted);">
+    <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(52,211,153,.08);display:inline-block;"></span>〜¥19,999</span>
+    <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(52,211,153,.15);display:inline-block;"></span>¥20,000〜</span>
+    <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(251,191,36,.12);display:inline-block;"></span>¥30,000〜</span>
+    <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(244,114,182,.15);display:inline-block;"></span>¥40,000〜</span>
+  </div>`;
+}
+
+function openDayDetail(date) {
+  const ss = sessionsForDate(date);
+  const rs = resvForDate(date);
+  const shift = getShift(date);
+  const kosoku = minDiff(shift.shiftStart, shift.shiftEnd);
+  const sessMin = ss.reduce((a,s)=>a+minDiff(s.startTime,s.endTime||s.startTime),0);
+  const taiki = Math.max(0, kosoku - sessMin);
+  const kadoritsu = kosoku>0 ? Math.round(sessMin/kosoku*100) : 0;
+  const th = ss.reduce((a,s)=>a+(s.predictedTakeHome||0),0);
+  const sales = ss.reduce((a,s)=>a+(parseInt(s.sales)||0),0);
+  const kosokuH = kosoku/60; const sessH = sessMin/60;
+
+  openModal(`
+    <div class="modal-title">📅 ${date.replace(/-/g,'/')} (${dow(date)})</div>
+    ${ss.length>0?`
+    <div class="kpi-grid-3" style="margin-bottom:12px;">
+      ${[['接客時間',minToH(sessMin)+'h','var(--blue)'],['拘束時間',minToH(kosoku)+'h','var(--text)'],
+         ['待機時間',minToH(taiki)+'h','var(--muted)'],['稼働率',kadoritsu+'%',kadoritsu>=70?'var(--green)':'var(--amber)'],
+         ['拘束時給',fmtY(kosokuH>0?Math.round(th/kosokuH):0),'var(--purple)'],['接客時給',fmtY(sessH>0?Math.round(th/sessH):0),'var(--green)'],
+      ].map(([l,v,c])=>`<div class="kpi-sm"><label>${l}</label><div class="val" style="color:${c}">${v}</div></div>`).join('')}
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:10px;">
+      <div><div style="font-size:12px;color:var(--muted);">${ss.length}本 · 売上 ${fmtY(sales)}</div></div>
+      <div style="text-align:right;"><div style="font-size:11px;color:var(--accent);">手取り</div><div style="font-size:22px;font-weight:700;color:var(--green);">${fmtY(th)}</div></div>
+    </div>
+    ${ss.map(s=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+      <div>
+        <div style="font-weight:600;">${s.startTime}〜${s.endTime||''} ${s.isHeaven?'⭐':''}</div>
+        <div style="font-size:11px;color:var(--muted);">${s.courseMinutes}分 · ${s.shimeiType} · ${s.customerName||'--'}</div>
+        ${s.hotel?`<div style="font-size:11px;color:var(--muted);">${s.hotel}${s.room?' #'+s.room:''}</div>`:''}
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:11px;color:var(--muted);">${fmtY(s.sales)}</div>
+        <div style="font-weight:700;color:var(--green);">${fmtY(s.predictedTakeHome)}</div>
+      </div>
+    </div>`).join('')}
+    <button class="btn" style="margin-top:12px;" onclick="closeModal();openReport('${date}')">📤 報告文生成</button>`
+    :`<div style="color:var(--muted);font-size:13px;margin-bottom:12px;">実績なし</div>`}
+    ${rs.length>0?`
+    <div style="margin-top:12px;">
+      <div style="font-size:12px;color:var(--amber);margin-bottom:8px;">未消化予約 ${rs.length}件</div>
+      ${rs.map(r=>`<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--muted);">${r.startTime} ${r.customerName||''} ${r.courseMinutes}分 ${statusBadge(r.status)}</div>`).join('')}
+    </div>`:''}
+    <button class="btn-ghost" style="width:100%;margin-top:12px;" onclick="closeModal()">閉じる</button>
+    <button class="btn" style="margin-top:8px;" onclick="closeModal();setTab('sess');renderSess('${date}')">この日の実績を編集</button>
+  `);
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAB: CUSTOMERS
+// ═══════════════════════════════════════════════════════════
+function renderCust() {
+  const el = document.getElementById('tab-cust');
+  const sorted = DB.customers.slice().sort((a,b)=>a.customerNo?.localeCompare(b.customerNo));
+
+  el.innerHTML = `
+  <div style="display:flex;gap:8px;margin-bottom:14px;">
+    <button class="btn" style="margin-top:0;" onclick="openCustForm()">＋ 新規顧客</button>
+  </div>
+  ${sorted.length===0?'<div class="empty">顧客がいません</div>':sorted.map(c=>{
+    const ds = c.lastVisit ? Math.floor((new Date()-new Date(c.lastVisit))/86400000) : null;
+    return `<div class="card" style="cursor:pointer;" onclick="openCustDetail('${c.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <span style="font-size:10px;color:var(--accent);font-weight:700;">${c.customerNo}</span>
+            <span style="font-size:16px;font-weight:700;">${c.name}</span>
+            ${c.media?.includes('ヘブン')?'<span class="tag tag-blue">ヘブン</span>':''}
+          </div>
+          <div style="font-size:12px;color:var(--muted);">来店 ${c.totalVisits||0}回${ds!=null?` · 前回 ${ds}日前`:''}${ds>30?' ⚠️':''}</div>
+          ${c.heavenName?`<div style="font-size:11px;color:var(--muted);">ヘブン: ${c.heavenName}</div>`:''}
+          ${c.memo?`<div style="font-size:11px;color:var(--muted);">${c.memo}</div>`:''}
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:10px;color:var(--muted);">累計手取り</div>
+          <div style="font-size:16px;font-weight:700;color:var(--green);">${fmtY(c.totalTakeHome||0)}</div>
+          <div style="font-size:10px;color:var(--muted);">客単価 ${fmtY(c.averageUnitPrice||0)}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('')}`;
+}
+
+function openCustDetail(id) {
+  const c = DB.customers.find(x=>x.id===id);
+  if(!c) return;
+  const visits = DB.sessions.filter(s=>s.customerId===id).sort((a,b)=>b.date.localeCompare(a.date));
+  const ds = c.lastVisit ? Math.floor((new Date()-new Date(c.lastVisit))/86400000) : null;
+
+  openModal(`
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+      <div>
+        <div style="font-size:10px;color:var(--accent);font-weight:700;margin-bottom:2px;">${c.customerNo}</div>
+        <div style="font-size:22px;font-weight:700;">${c.name}</div>
+        ${c.media?.length?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">${c.media.map(m=>`<span class="tag tag-blue">${m}</span>`).join('')}</div>`:''}
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:10px;color:var(--muted);">累計手取り</div>
+        <div style="font-size:20px;font-weight:700;color:var(--green);">${fmtY(c.totalTakeHome||0)}</div>
+        <div style="font-size:11px;color:var(--muted);">${c.totalVisits||0}回来店</div>
+      </div>
+    </div>
+    ${ds!=null?`<div style="font-size:12px;color:${ds>30?'var(--amber)':'var(--muted)'};margin-bottom:10px;">前回来店: ${c.lastVisit?.replace(/-/g,'/')} (${ds}日前)${ds>30?' ⚠️':''}</div>`:''}
+    ${c.heavenName?`<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">ヘブン名: ${c.heavenName}</div>`:''}
+    ${c.memo?`<div style="background:var(--card2);border-radius:8px;padding:10px;font-size:12px;margin-bottom:10px;">${c.memo}</div>`:''}
+    ${c.preferences?.length?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;">${c.preferences.map(p=>`<span class="tag tag-muted">${p}</span>`).join('')}</div>`:''}
+    <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px;">来店履歴</div>
+    ${visits.length===0?'<div style="font-size:13px;color:var(--muted);">来店記録なし</div>':visits.slice(0,10).map(s=>`
+    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;">
+      <div><div>${s.date?.replace(/-/g,'/')} ${s.startTime||''}</div><div style="font-size:11px;color:var(--muted);">${s.courseMinutes}分 · ${s.shimeiType} ${s.isHeaven?'⭐':''}</div></div>
+      <div style="text-align:right;"><div style="color:var(--muted);font-size:11px;">${fmtY(s.sales)}</div><div style="color:var(--green);font-weight:700;">${fmtY(s.predictedTakeHome)}</div></div>
+    </div>`).join('')}
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn-ghost" onclick="closeModal()">閉じる</button>
+      <button class="btn" style="flex:2;margin-top:0;" onclick="closeModal();openCustForm('${id}')">編集</button>
+    </div>
+  `);
+}
+
+function openCustForm(id) {
+  const c = id ? DB.customers.find(x=>x.id===id) : null;
+  const isNew = !c;
+  const init = c || { id:uid(), customerNo:nextCustNo(), name:'', aliases:[], media:[], heavenName:'', memo:'', notes:'', preferences:[], favoriteHotels:[], favoriteOptions:[] };
+
+  openModal(`
+    <div class="modal-title">${isNew?'➕ 新規顧客':'✏️ 顧客編集'}</div>
+    <div class="fr"><label>顧客番号</label><div class="val"><span>${init.customerNo}</span></div></div>
+    <div class="fr"><label>お名前 *</label><div class="val"><input type="text" id="cf-name" value="${init.name}"></div></div>
+    <div class="fr"><label>ヘブン名</label><div class="val"><input type="text" id="cf-heaven-name" value="${init.heavenName||''}"></div></div>
+    <div class="fr"><label>媒体</label><div class="val">
+      <div class="chips">${['ヘブン','デリヘルタウン','不明','その他'].map(m=>`<button class="chip cf-media${(init.media||[]).includes(m)?' active':''}" onclick="this.classList.toggle('active')" data-val="${m}">${m}</button>`).join('')}</div>
+    </div></div>
+    <div class="fr"><label>タグ</label><div class="val">
+      <div class="chips">${CUST_TAGS.map(t=>`<button class="chip cf-pref${(init.preferences||[]).includes(t)?' active':''}" onclick="this.classList.toggle('active')" data-val="${t}">${t}</button>`).join('')}</div>
+    </div></div>
+    <div class="fr"><label>メモ</label><div class="val"><textarea id="cf-memo" style="height:64px;">${init.memo||''}</textarea></div></div>
+    <div class="fr"><label>備考</label><div class="val"><textarea id="cf-notes" style="height:64px;">${init.notes||''}</textarea></div></div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn-ghost" onclick="closeModal()">キャンセル</button>
+      <button class="btn" style="flex:2;margin-top:0;" onclick="saveCustForm('${init.id}','${isNew}')">保存する</button>
+    </div>
+    ${!isNew?`<button class="btn-danger" style="width:100%;margin-top:8px;" onclick="if(confirm('削除しますか？')){deleteCust('${init.id}');}">削除</button>`:''}
+  `);
+}
+
+async function saveCustForm(id, isNew) {
+  const name = document.getElementById('cf-name')?.value?.trim()||'';
+  if(!name){flash('名前を入力してください');return;}
+  const media = [...document.querySelectorAll('.cf-media.active')].map(b=>b.dataset.val);
+  const prefs = [...document.querySelectorAll('.cf-pref.active')].map(b=>b.dataset.val);
+  const existing = DB.customers.findIndex(x=>x.id===id);
+  const base = existing>=0 ? DB.customers[existing] : { id, customerNo:nextCustNo(), totalVisits:0, totalSales:0, totalTakeHome:0, averageUnitPrice:0, lastVisit:'' };
+  const rec = { ...base, name, media, preferences:prefs,
+    heavenName: document.getElementById('cf-heaven-name')?.value||'',
+    memo: document.getElementById('cf-memo')?.value||'',
+    notes: document.getElementById('cf-notes')?.value||'',
+    updatedAt: new Date().toISOString(), createdAt: base.createdAt||new Date().toISOString() };
+  if(existing>=0) DB.customers[existing]=rec; else DB.customers.push(rec);
+  saveDB(); closeModal(); renderCust();
+  await webhookPost(existing>=0?'updateCustomer':'addCustomer', rec);
+  flash('顧客を保存しました ✓');
+}
+
+async function deleteCust(id) {
+  DB.customers = DB.customers.filter(x=>x.id!==id);
+  saveDB(); closeModal(); renderCust();
+  await webhookPost('deleteCustomer', {id});
+  flash('削除しました');
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAB: ANALYSIS
+// ═══════════════════════════════════════════════════════════
+function renderAna() {
+  const el = document.getElementById('tab-ana');
+  const [year, month] = calMonth.split('-').map(Number);
+  const ym = calMonth;
+  const monthSess = DB.sessions.filter(s=>s.date.slice(0,7)===ym);
+  const allMonths = [...new Set(DB.sessions.map(s=>s.date.slice(0,7)))].sort().reverse();
+
+  // Monthly tabs
+  el.innerHTML = `
+  <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
+    <button class="btn-ghost" style="padding:8px 14px;" onclick="calMonth=new Date(new Date(calMonth+'-01').setMonth(new Date(calMonth+'-01').getMonth()-1)).toISOString().slice(0,7);renderAna()">‹</button>
+    <span style="font-weight:700;flex:1;text-align:center;">${year}年${month}月</span>
+    <button class="btn-ghost" style="padding:8px 14px;" onclick="calMonth=new Date(new Date(calMonth+'-01').setMonth(new Date(calMonth+'-01').getMonth()+1)).toISOString().slice(0,7);renderAna()">›</button>
+  </div>
+  <div id="ana-content"></div>`;
+
+  const ana = document.getElementById('ana-content');
+  if(!monthSess.length){ana.innerHTML='<div class="empty">この月のデータがありません</div>';return;}
+
+  const th = monthSess.reduce((a,s)=>a+(s.predictedTakeHome||0),0);
+  const sales = monthSess.reduce((a,s)=>a+(parseInt(s.sales)||0),0);
+  const shopShare = sales - th;
+  const hv = monthSess.filter(s=>s.isHeaven).length;
+  const hvRate = monthSess.length>0?Math.round(hv/monthSess.length*100):0;
+  const workDays = [...new Set(monthSess.map(s=>s.date))].length;
+  const goal = DB.settings.monthGoal||300000;
+  const goalPct = Math.min(100,Math.round(th/goal*100));
+
+  // Shift stats
+  const totalSessMin = monthSess.reduce((a,s)=>a+minDiff(s.startTime,s.endTime||s.startTime),0);
+  const dates = [...new Set(monthSess.map(s=>s.date))];
+  let totalKosokuMin=0;
+  dates.forEach(d=>{ const sh=getShift(d); totalKosokuMin+=minDiff(sh.shiftStart,sh.shiftEnd); });
+  const kadoritsu = totalKosokuMin>0?Math.round(totalSessMin/totalKosokuMin*100):0;
+  const totalH = totalSessMin/60;
+  const kosokuH = totalKosokuMin/60;
+
+  // Weekday analysis
+  const byDow = {};
+  DAYS.forEach(d=>{byDow[d]={n:0,th:0,h:0};});
+  monthSess.forEach(s=>{const d=dow(s.date);byDow[d].n++;byDow[d].th+=s.predictedTakeHome||0;byDow[d].h+=minDiff(s.startTime,s.endTime||s.startTime)/60;});
+  const maxDowTH = Math.max(...DAYS.map(d=>byDow[d].n>0?Math.round(byDow[d].th/byDow[d].n):0),1);
+
+  // Hour heatmap
+  const heatmap = new Array(24).fill(0);
+  monthSess.forEach(s=>{
+    if(!s.startTime||!s.endTime)return;
+    const st=toMin(s.startTime); const et=toMin(s.endTime);
+    for(let m=st;m<et;m+=30){ const h=Math.floor(m/60)%24; if(h<24)heatmap[h]++; }
+  });
+  const maxH = Math.max(...heatmap,1);
+
+  ana.innerHTML = `
+  <!-- 月次KPI -->
+  <div class="card">
+    <div class="card-title"><span class="ico">📊</span>月次サマリ</div>
+    <div class="kpi-grid">
+      <div class="kpi" style="background:rgba(244,114,182,.08);border-color:rgba(244,114,182,.25);"><label>手取り</label><div class="val" style="color:var(--accent)">${fmtY(th)}</div></div>
+      <div class="kpi"><label>月目標比</label><div class="val" style="color:${goalPct>=100?'var(--green)':'var(--text)'}">${goalPct}%</div></div>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar" style="width:${goalPct}%;background:linear-gradient(90deg,var(--accent2),var(--green))"></div></div>
+    <div class="kpi-grid-3" style="margin-top:10px;">
+      ${[['本数',monthSess.length+'本','var(--blue)'],['客払い',fmtY(sales),'var(--text)'],['店落ち',fmtY(shopShare),'var(--amber)'],
+         ['出勤日数',workDays+'日','var(--text)'],['ヘブン',hv+'本 ('+hvRate+'%)','var(--gold)'],['平均客単価',fmtY(Math.round(sales/(monthSess.length||1))),'var(--purple)'],
+      ].map(([l,v,c])=>`<div class="kpi-sm"><label>${l}</label><div class="val" style="color:${c}">${v}</div></div>`).join('')}
+    </div>
+  </div>
+
+  <!-- 稼働分析 -->
+  <div class="card">
+    <div class="card-title"><span class="ico">⏱️</span>稼働分析</div>
+    <div class="kpi-grid-3">
+      ${[['接客時間',minToH(totalSessMin)+'h','var(--blue)'],['拘束時間',minToH(totalKosokuMin)+'h','var(--text)'],['稼働率',kadoritsu+'%',kadoritsu>=70?'var(--green)':'var(--amber)'],
+         ['接客時給',fmtY(totalH>0?Math.round(th/totalH):0),'var(--green)'],['拘束時給',fmtY(kosokuH>0?Math.round(th/kosokuH):0),'var(--purple)'],['平均手取り',fmtY(workDays>0?Math.round(th/workDays):0),'var(--text)'],
+      ].map(([l,v,c])=>`<div class="kpi-sm"><label>${l}</label><div class="val" style="color:${c}">${v}</div></div>`).join('')}
+    </div>
+  </div>
+
+  <!-- 曜日別 -->
+  <div class="card">
+    <div class="card-title"><span class="ico">📆</span>曜日別分析</div>
+    ${DAYS.map((d,i)=>{
+      const dd=byDow[d]; const avg=dd.n>0?Math.round(dd.th/dd.n):0;
+      const pct=maxDowTH>0?Math.min(100,avg/maxDowTH*100):0;
+      const col=i===0?'var(--red)':i===6?'var(--blue)':'var(--text)';
+      return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <div style="width:22px;font-size:12px;font-weight:700;color:${col}">${d}</div>
+        <div style="flex:1;height:18px;background:var(--card2);border-radius:4px;overflow:hidden;">
+          <div style="height:100%;border-radius:4px;width:${pct}%;background:linear-gradient(90deg,var(--accent2),var(--accent));"></div>
+        </div>
+        <div style="width:100px;text-align:right;font-size:11px;">
+          ${avg>0?`<span style="color:var(--green);font-weight:700;">${fmtY(avg)}</span><span style="color:var(--muted);"> /${dd.n}本</span>`:'<span style="color:var(--muted);">—</span>'}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>
+
+  <!-- 時間帯ヒートマップ -->
+  <div class="card">
+    <div class="card-title"><span class="ico">🕐</span>時間帯ヒートマップ</div>
+    <div style="display:flex;gap:1px;margin-bottom:4px;">
+      ${heatmap.map((v,i)=>{
+        const pct=v/maxH; const cls=pct>0.75?'h4':pct>0.5?'h3':pct>0.25?'h2':v>0?'h1':'';
+        return `<div class="hm-cell ${cls}" title="${i}時: ${v}件" style="flex:1;"></div>`;
+      }).join('')}
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);">
+      <span>0時</span><span>6時</span><span>12時</span><span>18時</span><span>24時</span>
+    </div>
+    <div style="margin-top:10px;">
+      ${[['11-14時',11,14],['14-17時',14,17],['17-18時',17,18],['18-22時',18,22]].map(([label,from,to])=>{
+        const cnt=heatmap.slice(from,to).reduce((a,v)=>a+v,0);
+        return `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid var(--border);">
+          <span>${label}</span><span style="color:var(--blue);font-weight:700;">${cnt}コマ</span>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>
+
+  <!-- 全月別 -->
+  <div class="card">
+    <div class="card-title"><span class="ico">📅</span>月別推移</div>
+    ${allMonths.map(m=>{
+      const ss=DB.sessions.filter(s=>s.date.slice(0,7)===m);
+      const mTH=ss.reduce((a,s)=>a+(s.predictedTakeHome||0),0);
+      const mHV=ss.filter(s=>s.isHeaven).length;
+      const sr=mHV>=20?{l:'金★',c:'var(--gold)'}:mHV>=10?{l:'赤★',c:'var(--star-red)'}:mHV>=5?{l:'青★',c:'var(--star-blue)'}:{l:'',c:''};
+      const maxTH=Math.max(...allMonths.map(x=>DB.sessions.filter(s=>s.date.slice(0,7)===x).reduce((a,s)=>a+(s.predictedTakeHome||0),0)),1);
+      return `<div style="margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-weight:700;">${m.replace('-','年')}月</span>
+            ${sr.l?`<span style="font-size:11px;color:${sr.c};font-weight:700;">${sr.l}(${mHV}本)</span>`:''}
+          </div>
+          <span style="color:var(--green);font-weight:700;">${fmtY(mTH)}</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">${ss.length}本</div>
+        <div class="progress-wrap" style="height:4px;"><div class="progress-bar" style="width:${mTH/maxTH*100}%;background:linear-gradient(90deg,var(--accent2),var(--green))"></div></div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAB: SETTINGS
+// ═══════════════════════════════════════════════════════════
+function renderCfg() {
+  const el = document.getElementById('tab-cfg');
+  const s = DB.settings;
+  el.innerHTML = `
+  <div class="card">
+    <div class="card-title"><span class="ico">🔗</span>Google Sheets 連携</div>
+    <div class="fr"><label>Webhook URL</label><div class="val"><input type="text" id="cfg-webhook" value="${s.webhookUrl||''}" placeholder="https://script.google.com/..."></div></div>
+    <button class="btn" onclick="testAndSaveWebhook()">接続テスト & 保存</button>
+    <button class="btn" style="background:linear-gradient(135deg,#059669,var(--green));margin-top:8px;" onclick="syncFromSheet()">📥 スプシから全データ読込</button>
+    <button class="btn" style="background:linear-gradient(135deg,var(--blue),var(--purple));margin-top:8px;" onclick="bulkExportToSheet()">📤 全データをスプシへ送信</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="ico">💰</span>バック設定</div>
+    <div class="fr"><label>月目標(円)</label><div class="val"><input type="number" id="cfg-goal" value="${s.monthGoal||300000}"></div></div>
+    <div class="fr"><label>本指バック(円)</label><div class="val"><input type="number" id="cfg-hon" value="${s.honShimeiBack||1000}"></div></div>
+    <div class="fr"><label>無料OP閾値</label><div class="val"><input type="number" id="cfg-free-thr" value="${s.freeOptionThreshold||1}"></div></div>
+    <div class="fr"><label>超過OP単価(円)</label><div class="val"><input type="number" id="cfg-extra-op" value="${s.extraOptionBack||500}"></div></div>
+    <div class="fr"><label>雑費率</label><div class="val"><input type="number" id="cfg-zatsubi" value="${(s.zatsubiRate||0.1)*100}" step="1"> %</div></div>
+    <button class="btn" onclick="saveSettings()">設定を保存</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="ico">💳</span>有料オプション設定</div>
+    ${Object.entries(s.paidOptions||{顔射:1000,写メ:1000,ムービー:2000,ごっくん:2000,AF:5000}).map(([k,v])=>`
+    <div class="fr"><label>${k}</label><div class="val"><input type="number" id="po-${k}" value="${v}"> 円</div></div>`).join('')}
+    <button class="btn" onclick="savePaidOpts()">OP設定を保存</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="ico">📤</span>未送信キュー</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:10px;">未送信: <b id="cfg-queue-cnt">${syncQueue.length}</b>件</div>
+    <button class="btn" onclick="retryQueue()" ${syncQueue.length===0?'disabled':''}>🔄 再送</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="ico">🗑️</span>データ管理</div>
+    <button class="btn-danger" style="width:100%;" onclick="if(confirm('全データをリセットします。よろしいですか？')){resetAll();}">全データリセット</button>
+  </div>`;
+}
+
+async function testAndSaveWebhook() {
+  const url = document.getElementById('cfg-webhook')?.value?.trim()||'';
+  if(!url){flash('URLを入力してください');return;}
+  DB.settings.webhookUrl = url;
+  saveDB();
+  try{
+    setSyncStatus('saving','テスト中…');
+    const res = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'ping',payload:{}})});
+    const d = await res.json();
+    if(d.status==='ok'){setSyncStatus('ok');flash('接続成功 ✓');}
+    else throw new Error(d.message);
+  }catch(e){setSyncStatus('err');flash('接続失敗: '+e.message);}
+}
+
+async function syncFromSheet() {
+  const ok = await loadFromWebhook();
+  if(ok){renderAll();flash('スプシから読み込みました ✓');}
+  else flash('読み込み失敗');
+}
+
+async function bulkExportToSheet() {
+  if(!DB.settings.webhookUrl){flash('Webhook URLを設定してください');return;}
+  setSyncStatus('saving');
+  try{
+    const res = await fetch(DB.settings.webhookUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'bulkImport',payload:{sessions:DB.sessions,reservations:DB.reservations,customers:DB.customers,settings:DB.settings,daily_shifts:Object.entries(DB.daily_shifts).filter(([k])=>k!=='default').map(([date,s])=>({date,...s}))}})});
+    const d=await res.json();
+    if(d.status==='ok'){setSyncStatus('ok');flash('全データを送信しました ✓');}
+    else throw new Error(d.message);
+  }catch(e){setSyncStatus('err');flash('送信失敗: '+e.message);}
+}
+
+async function saveSettings() {
+  DB.settings.monthGoal = parseInt(document.getElementById('cfg-goal')?.value)||300000;
+  DB.settings.honShimeiBack = parseInt(document.getElementById('cfg-hon')?.value)||1000;
+  DB.settings.freeOptionThreshold = parseInt(document.getElementById('cfg-free-thr')?.value)||1;
+  DB.settings.extraOptionBack = parseInt(document.getElementById('cfg-extra-op')?.value)||500;
+  DB.settings.zatsubiRate = (parseInt(document.getElementById('cfg-zatsubi')?.value)||10)/100;
+  saveDB();
+  await webhookPost('updateSettings', DB.settings);
+  flash('設定を保存しました ✓');
+}
+
+async function savePaidOpts() {
+  const opts = {};
+  Object.keys(DB.settings.paidOptions||{}).forEach(k=>{
+    const el = document.getElementById('po-'+k);
+    if(el) opts[k] = parseInt(el.value)||0;
+  });
+  DB.settings.paidOptions = opts;
+  saveDB();
+  await webhookPost('updateSettings', DB.settings);
+  flash('OP設定を保存しました ✓');
+}
+
+function resetAll() {
+  DB.sessions = INIT_SESSIONS;
+  DB.customers = INIT_CUSTOMERS;
+  DB.reservations = [];
+  DB.settings = { ...INITIAL_SETTINGS };
+  DB.daily_shifts = { ...INITIAL_SHIFTS };
+  saveDB(); renderAll();
+  flash('リセットしました');
+}
+
+// ═══════════════════════════════════════════════════════════
+// ROUTING
+// ═══════════════════════════════════════════════════════════
+function setTab(id) {
+  currentTab = id;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===id));
+  document.querySelectorAll('.tab-content').forEach(c=>{ c.style.display = c.id==='tab-'+id?'':'none'; });
+  renderTab(id);
+}
+
+function renderTab(id) {
+  switch(id){
+    case 'dash':  renderDash(); break;
+    case 'resv':  renderResv(); break;
+    case 'sess':  renderSess(); break;
+    case 'cal':   renderCal();  break;
+    case 'cust':  renderCust(); break;
+    case 'ana':   renderAna();  break;
+    case 'cfg':   renderCfg();  break;
+  }
+}
+
+function renderAll() {
+  renderTab(currentTab);
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+async function init() {
+  // Load from localStorage
+  DB.sessions     = lsLoad('sessions',     INIT_SESSIONS);
+  DB.customers    = lsLoad('customers',    INIT_CUSTOMERS);
+  DB.reservations = lsLoad('reservations', []);
+  DB.settings     = { ...INITIAL_SETTINGS, ...lsLoad('settings', {}) };
+  DB.daily_shifts = { ...INITIAL_SHIFTS,   ...lsLoad('daily_shifts', {}) };
+
+  // Try to load from webhook
+  if (DB.settings.webhookUrl) {
+    await loadFromWebhook();
+  } else {
+    setSyncStatus('idle');
+  }
+
+  // Hide loading, show app
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+
+  // Tab routing
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.addEventListener('click', () => setTab(t.dataset.tab));
+  });
+
+  updateQueueBadge();
+  renderDash();
+}
+
+init();
+</script>
+</body>
+</html>
