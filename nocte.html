@@ -256,7 +256,8 @@ const INITIAL_SHIFTS = {
   '2026-05-15': { shiftStart:'10:00', shiftEnd:'22:00' },
 };
 
-const DISCOUNT_NO_BACK = ['はじめて割','新人割'];
+const DISCOUNT_NO_BACK = ['はじめて割','新人割','即姫割'];
+const DISCOUNT_20MIN = ['出勤一番','スタート枠']; // +20分バック反映
 const STATUS_LABELS = { pending:'未確認', room_wait:'部屋待ち', confirmed:'確認済', arrived:'到着', cancelled:'キャンセル' };
 const STATUS_CLASS  = { pending:'s-pending', room_wait:'s-room_wait', confirmed:'s-confirmed', arrived:'s-arrived', cancelled:'s-cancelled' };
 const CUST_TAGS = ['優しい','会話多め','静か','OP好き','ロング','本指候補','注意'];
@@ -516,7 +517,10 @@ function parseLine(txt) {
   if (waribiki) {
     const bm = waribiki.match(/\+(\d+)分/);
     if(bm) bonusMin=parseInt(bm[1]);
+    // バック反映しない割引でなければ含む
     if(!DISCOUNT_NO_BACK.some(p=>waribiki.includes(p))) includeBonus=true;
+    // 出勤一番/スタート枠は+20分固定
+    if(DISCOUNT_20MIN.some(p=>waribiki.includes(p))) { bonusMin=20; includeBonus=true; }
   }
   const isHeaven = txt.includes('ヘブン') || txt.toLowerCase().includes('heaven');
   return {
@@ -1247,6 +1251,8 @@ function openDayDetail(date) {
 // ═══════════════════════════════════════════════════════════
 // TAB: CUSTOMERS
 // ═══════════════════════════════════════════════════════════
+let expandedCustId = null;
+
 function renderCust() {
   const el = document.getElementById('tab-cust');
   const sorted = DB.customers.slice().sort((a,b)=>a.customerNo?.localeCompare(b.customerNo));
@@ -1257,26 +1263,102 @@ function renderCust() {
   </div>
   ${sorted.length===0?'<div class="empty">顧客がいません</div>':sorted.map(c=>{
     const ds = c.lastVisit ? Math.floor((new Date()-new Date(c.lastVisit))/86400000) : null;
-    return `<div class="card" style="cursor:pointer;" onclick="openCustDetail('${c.id}')">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-        <div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-            <span style="font-size:10px;color:var(--accent);font-weight:700;">${c.customerNo}</span>
-            <span style="font-size:16px;font-weight:700;">${c.name}</span>
-            ${c.media?.includes('ヘブン')?'<span class="tag tag-blue">ヘブン</span>':''}
+    const isExpanded = expandedCustId === c.id;
+    const visits = DB.sessions.filter(s=>s.customerId===c.id).sort((a,b)=>b.date.localeCompare(a.date));
+    return `<div class="card" style="margin-bottom:10px;">
+      <!-- ヘッダー行（タップで展開） -->
+      <div style="cursor:pointer;" onclick="toggleCust('${c.id}')">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+              <span style="font-size:10px;color:var(--accent);font-weight:700;">${c.customerNo}</span>
+              <span style="font-size:16px;font-weight:700;">${c.name}</span>
+              ${c.media?.includes('ヘブン')?'<span class="tag tag-blue">ヘブン</span>':''}
+            </div>
+            <div style="font-size:12px;color:var(--muted);">来店 ${c.totalVisits||0}回${ds!=null?` · 前回 ${ds}日前`:''}${ds>30?' ⚠️':''}</div>
+            ${c.heavenName?`<div style="font-size:11px;color:var(--muted);">ヘブン: ${c.heavenName}</div>`:''}
           </div>
-          <div style="font-size:12px;color:var(--muted);">来店 ${c.totalVisits||0}回${ds!=null?` · 前回 ${ds}日前`:''}${ds>30?' ⚠️':''}</div>
-          ${c.heavenName?`<div style="font-size:11px;color:var(--muted);">ヘブン: ${c.heavenName}</div>`:''}
-          ${c.memo?`<div style="font-size:11px;color:var(--muted);">${c.memo}</div>`:''}
-        </div>
-        <div style="text-align:right;">
-          <div style="font-size:10px;color:var(--muted);">累計手取り</div>
-          <div style="font-size:16px;font-weight:700;color:var(--green);">${fmtY(c.totalTakeHome||0)}</div>
-          <div style="font-size:10px;color:var(--muted);">客単価 ${fmtY(c.averageUnitPrice||0)}</div>
+          <div style="text-align:right;">
+            <div style="font-size:10px;color:var(--muted);">累計手取り</div>
+            <div style="font-size:16px;font-weight:700;color:var(--green);">${fmtY(c.totalTakeHome||0)}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;">${isExpanded?'▲ 閉じる':'▼ 詳細'}</div>
+          </div>
         </div>
       </div>
+      <!-- 展開コンテンツ -->
+      ${isExpanded?`
+      <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+        <!-- メモ編集 -->
+        <div style="margin-bottom:12px;">
+          <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:6px;">📝 メモ</div>
+          <textarea id="memo-${c.id}" style="height:72px;font-size:13px;" placeholder="特記事項、好み、注意点など…">${c.memo||''}</textarea>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">備考</div>
+          <textarea id="notes-${c.id}" style="height:52px;font-size:12px;margin-top:4px;" placeholder="備考…">${c.notes||''}</textarea>
+          <button class="btn-sm" style="margin-top:8px;" onclick="saveCustMemo('${c.id}')">メモを保存</button>
+        </div>
+        <!-- タグ -->
+        <div style="margin-bottom:12px;">
+          <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:6px;">🏷️ タグ</div>
+          <div class="chips">${CUST_TAGS.map(t=>`<button class="chip cptag-${c.id}${(c.preferences||[]).includes(t)?' active':''}" onclick="toggleCustTag('${c.id}','${t}',this)" data-val="${t}">${t}</button>`).join('')}</div>
+        </div>
+        <!-- 来店履歴 -->
+        <div style="margin-bottom:12px;">
+          <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:6px;">📅 来店履歴 (${visits.length}件)</div>
+          ${visits.length===0?'<div style="font-size:12px;color:var(--muted);">なし</div>':visits.slice(0,8).map(s=>`
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;">
+            <div>
+              <div>${s.date?.replace(/-/g,'/')} ${s.startTime||''} ${s.isHeaven?'⭐':''}</div>
+              <div style="color:var(--muted);font-size:11px;">${s.courseMinutes}分 · ${s.shimeiType}${s.discountType?' · '+s.discountType:''}</div>
+              ${s.hotel?`<div style="color:var(--muted);font-size:11px;">${s.hotel}${s.room?' #'+s.room:''}</div>`:''}
+              ${s.memo?`<div style="color:var(--muted);font-size:11px;">📝 ${s.memo}</div>`:''}
+            </div>
+            <div style="text-align:right;">
+              <div style="color:var(--muted);font-size:11px;">${fmtY(s.sales)}</div>
+              <div style="color:var(--green);font-weight:700;">${fmtY(s.predictedTakeHome)}</div>
+            </div>
+          </div>`).join('')}
+        </div>
+        <!-- 操作ボタン -->
+        <div style="display:flex;gap:8px;">
+          <button class="btn-blue" onclick="openCustForm('${c.id}')">編集</button>
+          <button class="btn-danger" onclick="if(confirm('削除しますか？'))deleteCust('${c.id}')">削除</button>
+        </div>
+      </div>`:''}
     </div>`;
   }).join('')}`;
+}
+
+function toggleCust(id) {
+  expandedCustId = expandedCustId === id ? null : id;
+  renderCust();
+}
+
+async function saveCustMemo(id) {
+  const memo  = document.getElementById('memo-'+id)?.value||'';
+  const notes = document.getElementById('notes-'+id)?.value||'';
+  const idx = DB.customers.findIndex(c=>c.id===id);
+  if(idx<0) return;
+  DB.customers[idx].memo  = memo;
+  DB.customers[idx].notes = notes;
+  DB.customers[idx].updatedAt = new Date().toISOString();
+  saveDB();
+  await webhookPost('updateCustomer', DB.customers[idx]);
+  flash('メモを保存しました ✓');
+}
+
+async function toggleCustTag(id, tag, btn) {
+  btn.classList.toggle('active');
+  const idx = DB.customers.findIndex(c=>c.id===id);
+  if(idx<0) return;
+  const prefs = DB.customers[idx].preferences || [];
+  if(prefs.includes(tag)) {
+    DB.customers[idx].preferences = prefs.filter(p=>p!==tag);
+  } else {
+    DB.customers[idx].preferences = [...prefs, tag];
+  }
+  DB.customers[idx].updatedAt = new Date().toISOString();
+  saveDB();
+  await webhookPost('updateCustomer', DB.customers[idx]);
 }
 
 function openCustDetail(id) {
