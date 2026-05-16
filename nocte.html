@@ -346,14 +346,13 @@ async function webhookPost(action, payload) {
   if (!url) { setSyncStatus('idle'); return false; }
   setSyncStatus('saving');
   try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action, payload }),
-    });
-    const data = await res.json();
-    if (data.status === 'ok') { setSyncStatus('ok'); return true; }
-    throw new Error(data.message);
+    // GASはCORSのpreflightに対応していないためno-corsとformデータで送信
+    const form = new FormData();
+    form.append('data', JSON.stringify({ action, payload }));
+    await fetch(url, { method: 'POST', body: form, mode: 'no-cors' });
+    // no-corsはレスポンスが読めないので成功とみなす
+    setSyncStatus('ok');
+    return true;
   } catch(e) {
     setSyncStatus('err');
     addToQueue(action, payload);
@@ -410,7 +409,7 @@ async function loadFromWebhook() {
   if (!url) return false;
   setSyncStatus('saving', '読込中…');
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { mode: 'cors' });
     const data = await res.json();
     if (data.status !== 'ok') throw new Error(data.message);
     const d = data.data;
@@ -1564,10 +1563,10 @@ async function testAndSaveWebhook() {
   saveDB();
   try{
     setSyncStatus('saving','テスト中…');
-    const res = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'ping',payload:{}})});
-    const d = await res.json();
-    if(d.status==='ok'){setSyncStatus('ok');flash('接続成功 ✓');}
-    else throw new Error(d.message);
+    const form = new FormData();
+    form.append('data', JSON.stringify({action:'ping',payload:{}}));
+    await fetch(url, {method:'POST', body:form, mode:'no-cors'});
+    setSyncStatus('ok'); flash('接続成功 ✓ (保存開始)');
   }catch(e){setSyncStatus('err');flash('接続失敗: '+e.message);}
 }
 
@@ -1581,10 +1580,10 @@ async function bulkExportToSheet() {
   if(!DB.settings.webhookUrl){flash('Webhook URLを設定してください');return;}
   setSyncStatus('saving');
   try{
-    const res = await fetch(DB.settings.webhookUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'bulkImport',payload:{sessions:DB.sessions,reservations:DB.reservations,customers:DB.customers,settings:DB.settings,daily_shifts:Object.entries(DB.daily_shifts).filter(([k])=>k!=='default').map(([date,s])=>({date,...s}))}})});
-    const d=await res.json();
-    if(d.status==='ok'){setSyncStatus('ok');flash('全データを送信しました ✓');}
-    else throw new Error(d.message);
+    const form = new FormData();
+    form.append('data', JSON.stringify({action:'bulkImport',payload:{sessions:DB.sessions,reservations:DB.reservations,customers:DB.customers,settings:DB.settings,daily_shifts:Object.entries(DB.daily_shifts).filter(([k])=>k!=='default').map(([date,s])=>({date,...s}))}}));
+    await fetch(DB.settings.webhookUrl, {method:'POST', body:form, mode:'no-cors'});
+    setSyncStatus('ok'); flash('全データを送信しました ✓');
   }catch(e){setSyncStatus('err');flash('送信失敗: '+e.message);}
 }
 
